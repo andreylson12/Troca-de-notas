@@ -89,13 +89,15 @@ function nomeUF(sigla){
   const mapa={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
   return mapa[String(sigla||'').toUpperCase()]||'';
 }
-
 function ajustarTipoVeiculo(tipo){
   return String(tipo||'')
+  .replace(/RODO[-\s]?TREM\s*9\s*EIXOS?/i,'RODO-TREM 9 EIXO')
   .replace(/RODOTREM\s*9\s*EIXOS?/i,'RODO-TREM 9 EIXO')
   .replace(/BITREM\s*7\s*EIXOS?/i,'BI-TREM 7 EIXO')
   .replace(/CARRETA\s*LS\s*6\s*EIXOS?/i,'CARRETA LS 6 EIXO')
   .trim();
+}
+
 }
 
 function numeroLimpo(v){return String(v||'').replace(/[^\d]/g,'');}
@@ -283,14 +285,16 @@ async function lerOrdem(file=null){
   if(!texto || texto.length<50) texto=await ocrArquivo(file);
 
   let placa='';
- const mPlaca=
+const mPlaca=
   texto.match(/CARRO\s+DE\s+PLACA\s*(?:N[º°]?\s*)?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/PLACA\s+CAVALO\s*:?\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/CAVALO\s*:\s*(?:RODO\s*TREM\s*9\s*EIXO\s*)?([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/VE[IÍ]CULO\s+([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
   texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/[A-Z]{3}\d[A-Z0-9]\d{2}/);
+  texto.match(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/);
 
-  if(mPlaca) placa=mPlaca[1]||mPlaca[0];
+if(mPlaca) placa=(mPlaca[1]||mPlaca[0]).replace('-','');
 
   let uf='';
   const mUfCavalo=texto.match(/CAVALO\s*:\s*[A-Z]{3}\d[A-Z0-9]\d{2}[\s\S]{0,160}?\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s*\/\s*[A-Z]/i);
@@ -300,22 +304,26 @@ async function lerOrdem(file=null){
   else if(mUfPlaca) uf=mUfPlaca[2].toUpperCase();
 
   let motorista='';
- const mMotorista=
-  texto.match(/MOTORISTA\s+SR\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
+const mMotorista=
+  texto.match(/MOTORISTA\s+SR\.?\s*:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
+  texto.match(/SOLICITAMOS\s+ENTREGAR\s+AO\s+MOTORISTA\s+SR\.?\s*:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
   texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-  texto.match(/Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Contato/i) ||
-  texto.match(/MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i);
+  texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)(?:\s{2,}|$)/i) ||
+  texto.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+PREVIS/i);
 
-  if(mMotorista) motorista=mMotorista[1].trim();
+if(mMotorista) motorista=mMotorista[1].trim();
 
   let tipo='';
   const mTipo=
-    texto.match(/RODOTREM\s*9\s*EIXOS?/i) ||
-    texto.match(/BITREM\s*7\s*EIXOS?/i) ||
-    texto.match(/CARRETA\s*LS\s*6\s*EIXOS?/i) ||
-    texto.match(/TIPO DE VEICULO\s*:\s*([A-Z0-9\s]+?)(?:Data|$)/i);
+  texto.match(/RODO[-\s]?TREM\s*9\s*EIXOS?/i) ||
+  texto.match(/RODOTREM\s*9\s*EIXOS?/i) ||
+  texto.match(/BITREM\s*7\s*EIXOS?/i) ||
+  texto.match(/CARRETA\s*LS\s*6\s*EIXOS?/i) ||
+  texto.match(/VE[IÍ]CULO\s*:\s*([A-Z0-9\s]+?)(?:QUANTIDADE|$)/i) ||
+  texto.match(/OBS\s*:\s*([A-Z0-9\-\s]*TREM\s*9\s*EIXO)/i) ||
+  texto.match(/TIPO DO VEICULO\s*([A-Z0-9\s]+)/i);
 
-  if(mTipo) tipo=mTipo[1]?mTipo[1].trim():mTipo[0].trim();
+if(mTipo) tipo=mTipo[1]?mTipo[1].trim():mTipo[0].trim();
 
   ROBO.ordem={
     texto,

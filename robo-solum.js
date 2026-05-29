@@ -153,12 +153,17 @@ async function carregarPacote(){
 
     if(nome.endsWith('.xml')){
       ROBO.arquivos.xml=f;
-    }else if(nome.endsWith('.xlsx')||nome.endsWith('.xls')||nome.endsWith('.xlsm')||nome.endsWith('.csv')){
+    }else if(
+      nome.endsWith('.xlsx') ||
+      nome.endsWith('.xls') ||
+      nome.endsWith('.xlsm') ||
+      nome.endsWith('.csv')
+    ){
       ROBO.arquivos.planilha=f;
     }
   }
 
-  const docs=files.filter(f=>!ROBO.arquivos.xml && false || (
+  const docs=files.filter(f=>(
     !f.name.toLowerCase().endsWith('.xml') &&
     !f.name.toLowerCase().endsWith('.xlsx') &&
     !f.name.toLowerCase().endsWith('.xls') &&
@@ -167,45 +172,47 @@ async function carregarPacote(){
   ));
 
   for(const f of docs){
+
     let texto=await textoPDF(f);
-    if(!texto || texto.length<50) texto=await ocrArquivo(f);
+
+    if(!texto || texto.length<50){
+      texto=await ocrArquivo(f);
+    }
 
     const t=normalizar(texto);
+    const nomeArq=f.name.toLowerCase();
 
-   const nomeArq=f.name.toLowerCase();
-
-if(
-  nomeArq.includes('laudo') ||
-  nomeArq.includes('classificacao') ||
-  nomeArq.includes('classificação')
-){
-  ROBO.arquivos.laudo=f;
-}
-else if(
-  nomeArq.includes('balanca') ||
-  nomeArq.includes('balança') ||
-  nomeArq.includes('pesagem') ||
-  t.includes('PESAGEM') ||
-  t.includes('PESO LIQUIDO')
-){
-  ROBO.arquivos.pesagem=f;
-}
-else if(
-  nomeArq.includes('oc') ||
-  nomeArq.includes('ordem') ||
-  t.includes('ORDEM') ||
-  t.includes('CAVALO') ||
-  t.includes('MOTORISTA')
-){
-  ROBO.arquivos.ordem=f;
-}
-else if(
-  t.includes('UMIDADE') ||
-  t.includes('IMPUREZAS') ||
-  t.includes('CLASSIFICACAO')
-){
-  ROBO.arquivos.laudo=f;
-}
+    if(
+      nomeArq.includes('laudo') ||
+      nomeArq.includes('classificacao') ||
+      nomeArq.includes('classificação')
+    ){
+      ROBO.arquivos.laudo=f;
+    }
+    else if(
+      nomeArq.includes('balanca') ||
+      nomeArq.includes('balança') ||
+      nomeArq.includes('pesagem') ||
+      t.includes('PESAGEM') ||
+      t.includes('PESO LIQUIDO')
+    ){
+      ROBO.arquivos.pesagem=f;
+    }
+    else if(
+      nomeArq.includes('oc') ||
+      nomeArq.includes('ordem') ||
+      t.includes('ORDEM') ||
+      t.includes('CAVALO') ||
+      t.includes('MOTORISTA')
+    ){
+      ROBO.arquivos.ordem=f;
+    }
+    else if(
+      t.includes('UMIDADE') ||
+      t.includes('IMPUREZAS') ||
+      t.includes('CLASSIFICACAO')
+    ){
+      ROBO.arquivos.laudo=f;
     }
   }
 

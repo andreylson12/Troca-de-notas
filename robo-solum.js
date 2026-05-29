@@ -172,12 +172,40 @@ async function carregarPacote(){
 
     const t=normalizar(texto);
 
-    if(t.includes('PESAGEM') || t.includes('PESO LIQUIDO')){
-      ROBO.arquivos.pesagem=f;
-    }else if(t.includes('UMIDADE') || t.includes('IMPUREZAS') || t.includes('CLASSIFICACAO')){
-      ROBO.arquivos.laudo=f;
-    }else if(t.includes('ORDEM') || t.includes('CAVALO') || t.includes('MOTORISTA')){
-      ROBO.arquivos.ordem=f;
+   const nomeArq=f.name.toLowerCase();
+
+if(
+  nomeArq.includes('laudo') ||
+  nomeArq.includes('classificacao') ||
+  nomeArq.includes('classificação')
+){
+  ROBO.arquivos.laudo=f;
+}
+else if(
+  nomeArq.includes('balanca') ||
+  nomeArq.includes('balança') ||
+  nomeArq.includes('pesagem') ||
+  t.includes('PESAGEM') ||
+  t.includes('PESO LIQUIDO')
+){
+  ROBO.arquivos.pesagem=f;
+}
+else if(
+  nomeArq.includes('oc') ||
+  nomeArq.includes('ordem') ||
+  t.includes('ORDEM') ||
+  t.includes('CAVALO') ||
+  t.includes('MOTORISTA')
+){
+  ROBO.arquivos.ordem=f;
+}
+else if(
+  t.includes('UMIDADE') ||
+  t.includes('IMPUREZAS') ||
+  t.includes('CLASSIFICACAO')
+){
+  ROBO.arquivos.laudo=f;
+}
     }
   }
 

@@ -465,155 +465,226 @@ async function lerLaudoClassificacao(file=null){
 
   alert('Lendo laudo... aguarde.');
 
-  const texto=await ocrArquivo(file);
+  function limparValor(v){
+    if(!v)return '0.00';
+    return String(v)
+      .replace(',', '.')
+      .replace(/[^\d.]/g,'')
+      .trim();
+  }
 
-  console.log('OCR LAUDO:',texto);
+  function pegarCampo(texto,regex){
+    const m=texto.match(regex);
+    if(!m)return '';
+    return limparValor(m[1]);
+  }
 
-  const dados={
-    TaxaTicket70:pegarNumero(texto,/Umidade\s*:\s*(\d+[,.]\d+)/i),
-    TaxaTicket71:(()=>{
-      const m=texto.match(/(?:Mat.*?Impurezas?|Impurezas?)\s*:\s*(\d+[,.]\d+)/i);
-      if(!m)return '0.00';
-      let bruto=m[1];
-      if(bruto.includes('89,'))bruto=bruto.replace('89,','0,');
-      let n=parseFloat(bruto.replace(',','.'));
-      if(n>10)n=n/100;
-      return n.toFixed(2);
-    })(),
-    TaxaTicket72:pegarNumero(texto,/Esverdeados\s*:\s*(\d+[,.]\d+)/i),
-    TaxaTicket73:pegarNumero(texto,/Ardidos\s*:\s*(\d+[,.]\d+)/i),
-    TaxaTicket74:pegarNumero(texto,/Quebrados\s*\/?\s*Amassados\s*:\s*(\d+[,.]\d+)/i),
-    TaxaTicket75:pegarNumero(texto,/Total\s*(?:de\s*)?Avariad[oa]s?\s*:\s*(\d+[,.]\d+)/i)
+  function extrairDadosLaudo(texto){
+    texto=String(texto||'')
+      .replace(/\r/g,' ')
+      .replace(/\n/g,' ')
+      .replace(/\s+/g,' ');
+
+    return {
+      TaxaTicket70:pegarCampo(
+        texto,
+        /UMIDADE\s*:?\s*(\d+[.,]\d+)/i
+      ),
+
+      TaxaTicket71:pegarCampo(
+        texto,
+        /(?:IMPUREZAS?|MAT\.?\s*ESTRANHAS\s*E\s*IMPUREZAS?|MATERIAS?.*?IMP\.?)\s*:?\s*(\d+[.,]\d+)/i
+      ),
+
+      TaxaTicket72:pegarCampo(
+        texto,
+        /ESVERDEADOS\s*:?\s*(\d+[.,]\d+)/i
+      ),
+
+      TaxaTicket73:pegarCampo(
+        texto,
+        /ARDIDOS\s*:?\s*(\d+[.,]\d+)/i
+      ),
+
+      TaxaTicket74:pegarCampo(
+        texto,
+        /(?:QUEBRADOS\s*\/?\s*AMASSADOS|QUEBRADOS)\s*:?\s*(\d+[.,]\d+)/i
+      ),
+
+      TaxaTicket75:pegarCampo(
+        texto,
+        /(?:TOTAL\s+DE\s+AVARIADOS|AVARIADOS)\s*:?\s*(\d+[.,]\d+)/i
+      )
+    };
+  }
+
+  function contarCampos(dados){
+    return Object.values(dados)
+      .filter(v=>v && v!=='0.00' && v!=='0')
+      .length;
+  }
+
+  function binarizarCanvas(canvas){
+    const ctx=canvas.getContext('2d');
+    const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+    for(let i=0;i<img.data.length;i+=4){
+      const media=(
+        img.data[i]+
+        img.data[i+1]+
+        img.data[i+2]
+      )/3;
+
+      const cor=media>165?255:0;
+
+      img.data[i]=cor;
+      img.data[i+1]=cor;
+      img.data[i+2]=cor;
+    }
+
+    ctx.putImageData(img,0,0);
+    return canvas;
+  }
+
+  async function ocrCanvas(canvas){
+    const result=await Tesseract.recognize(
+      canvas,
+      'por',
+      {
+        tessedit_pageseg_mode: 6
+      }
+    );
+
+    return result.data.text;
+  }
+
+  let textos=[];
+
+  // 1 - tenta texto direto do PDF
+  try{
+    const textoDireto=await textoPDF(file);
+    if(textoDireto && textoDireto.length>50){
+      textos.push(textoDireto);
+    }
+  }catch(e){
+    console.log('Texto PDF não disponível',e);
+  }
+
+  // 2 - OCR normal
+  try{
+    const canvas=await arquivoParaCanvas(file);
+    const textoOCR=await ocrCanvas(canvas);
+    textos.push(textoOCR);
+  }catch(e){
+    console.log('OCR normal falhou',e);
+  }
+
+  // 3 - OCR com preto/branco
+  try{
+    const canvas2=await arquivoParaCanvas(file);
+    binarizarCanvas(canvas2);
+    const textoContraste=await ocrCanvas(canvas2);
+    textos.push(textoContraste);
+  }catch(e){
+    console.log('OCR contraste falhou',e);
+  }
+
+  let melhorDados=null;
+  let melhorTexto='';
+  let melhorQtd=-1;
+
+  for(const txt of textos){
+    const dados=extrairDadosLaudo(txt);
+    const qtd=contarCampos(dados);
+
+    if(qtd>melhorQtd){
+      melhorQtd=qtd;
+      melhorDados=dados;
+      melhorTexto=txt;
+    }
+  }
+
+  let dados=melhorDados||{
+    TaxaTicket70:'',
+    TaxaTicket71:'',
+    TaxaTicket72:'',
+    TaxaTicket73:'',
+    TaxaTicket74:'',
+    TaxaTicket75:''
   };
 
-  const aba=[...document.querySelectorAll('*')]
-    .find(e=>e.innerText&&e.innerText.trim()==='Classificação');
+  console.log('MELHOR OCR LAUDO:',melhorTexto);
+  console.log('DADOS EXTRAÍDOS LAUDO:',dados);
 
-  if(aba){aba.click(); await esperar(1500);}
+  // 4 - fallback manual inteligente
+  if(contarCampos(dados)<3){
+
+    alert(
+      'OCR do laudo ficou fraco.\n'+
+      'Vou pedir só os campos necessários.'
+    );
+
+    dados.TaxaTicket70=prompt(
+      'Digite UMIDADE:',
+      dados.TaxaTicket70||''
+    ) || '0.00';
+
+    dados.TaxaTicket71=prompt(
+      'Digite IMPUREZA:',
+      dados.TaxaTicket71||''
+    ) || '0.00';
+
+    dados.TaxaTicket74=prompt(
+      'Digite QUEBRADOS / AMASSADOS:',
+      dados.TaxaTicket74||''
+    ) || '0.00';
+
+    dados.TaxaTicket72=prompt(
+      'Digite ESVERDEADOS:',
+      dados.TaxaTicket72||'0.00'
+    ) || '0.00';
+
+    dados.TaxaTicket73=prompt(
+      'Digite ARDIDOS:',
+      dados.TaxaTicket73||'0.00'
+    ) || '0.00';
+
+    dados.TaxaTicket75=prompt(
+      'Digite TOTAL AVARIADO:',
+      dados.TaxaTicket75||''
+    ) || '0.00';
+  }
+
+  // garante ponto
+  for(const k in dados){
+    dados[k]=limparValor(dados[k]||'0.00');
+  }
+
+  const aba=[...document.querySelectorAll('*')]
+    .find(e=>
+      e.innerText &&
+      e.innerText.trim()==='Classificação'
+    );
+
+  if(aba){
+    aba.click();
+    await esperar(1500);
+  }
 
   for(const id in dados){
-    setInputCampo(document.querySelector('#'+id),dados[id]);
+    setInputCampo(
+      document.querySelector('#'+id),
+      dados[id]
+    );
   }
 
-  alert('Classificação preenchida. Confira antes de salvar.');
+  alert(
+    'Classificação preenchida:\n\n'+
+    'Umidade: '+dados.TaxaTicket70+'\n'+
+    'Impureza: '+dados.TaxaTicket71+'\n'+
+    'Quebrados: '+dados.TaxaTicket74+'\n'+
+    'Esverdeados: '+dados.TaxaTicket72+'\n'+
+    'Ardidos: '+dados.TaxaTicket73+'\n'+
+    'Avariado: '+dados.TaxaTicket75
+  );
 }
-
-function extrairPesos(texto){
-  console.log('OCR PESAGEM:',texto);
-
-  const candidatos=[...texto.matchAll(/\b\d{2}[.,]\d{3}\b/g)]
-    .map(m=>m[0])
-    .map(n=>parseInt(numeroLimpo(n),10))
-    .filter(v=>v>=20000&&v<=90000);
-
-  const valores=[...new Set(candidatos)].sort((a,b)=>a-b);
-
-  if(valores.length>=3){
-    return {tara:String(valores[0]),bruto:String(valores[valores.length-1]),metodo:'3 pesos encontrados'};
-  }
-
-  if(valores.length===2){
-    const menor=valores[0], maior=valores[1];
-    return {tara:String(maior-menor),bruto:String(maior),metodo:'calculado: bruto - líquido'};
-  }
-
-  return {
-    tara:prompt('Digite a tara / menor peso:', ''),
-    bruto:prompt('Digite o peso bruto / maior peso:', ''),
-    metodo:'manual'
-  };
-}
-
-function processoEntrada(){
-  const proc=document.querySelector('#processo');
-  const texto=proc?proc.options[proc.selectedIndex].text:'';
-  return texto.toUpperCase().includes('ENTRADA');
-}
-
-async function lerPesagemOCR(file=null){
-  file=file||ROBO.arquivos.pesagem||await escolherArquivo('.pdf,image/*');
-
-  alert('Lendo pesagem... aguarde.');
-
-  const texto=await ocrArquivo(file);
-  const pesos=extrairPesos(texto);
-
-  const aba=[...document.querySelectorAll('*')]
-    .find(e=>e.innerText&&e.innerText.trim()==='Pesagem');
-
-  if(aba){aba.click(); await esperar(1000);}
-
-  const inputs=[...document.querySelectorAll('input')]
-    .filter(i=>!i.disabled&&i.offsetParent!==null);
-
-  const campo1=inputs.find(i=>(i.placeholder||'').toLowerCase().includes('primeiro'))||inputs[0];
-  const campo2=inputs.find(i=>(i.placeholder||'').toLowerCase().includes('segundo'))||inputs[1];
-
-  let primeiro,segundo;
-
-  if(processoEntrada()){
-    primeiro=pesos.bruto;
-    segundo=pesos.tara;
-  }else{
-    primeiro=pesos.tara;
-    segundo=pesos.bruto;
-  }
-
-  setInputCampo(campo1,primeiro); await esperar(500);
-  setInputCampo(campo2,segundo); await esperar(500);
-
-  const btn=[...document.querySelectorAll('button')]
-    .find(b=>b.innerText.trim().includes('Pesar'));
-
-  if(btn)btn.click();
-
-  alert('Pesagem preenchida. Confira antes de salvar.');
-}
-
-async function executarGuiado(){
-  if(!ROBO.arquivos.xml || !ROBO.arquivos.planilha || !ROBO.arquivos.ordem || !ROBO.arquivos.laudo || !ROBO.arquivos.pesagem){
-    return alert('Primeiro clique em 9 - CARREGAR PACOTE e selecione os 5 arquivos.');
-  }
-
-  await lerXML(ROBO.arquivos.xml);
-  await lerPlanilha(ROBO.arquivos.planilha);
-  await lerOrdem(ROBO.arquivos.ordem);
-
-  if(confirm('Preencher PRIMEIRA TELA agora?')){
-    await preencherPrimeiraTela();
-  }
-
-  alert('Confira a primeira tela e clique em GERAR TICKET manualmente.\nDepois clique OK.');
-
-  if(confirm('Já gerou o ticket? Abrir/preencher NF agora?')){
-    await preencherNF();
-  }
-
-  alert('Confira e SALVE A NF manualmente.\nDepois clique OK.');
-
-  if(confirm('Preencher CLASSIFICAÇÃO agora?')){
-    await lerLaudoClassificacao(ROBO.arquivos.laudo);
-  }
-
-  alert('Confira e salve a classificação manualmente.\nDepois clique OK.');
-
-  if(confirm('Preencher PESAGEM agora?')){
-    await lerPesagemOCR(ROBO.arquivos.pesagem);
-  }
-
-  alert('EXECUÇÃO GUIADA FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
-}
-
-criarBotao('1 - XML',120,'#065f46').onclick=()=>lerXML();
-criarBotao('2 - PLANILHA',170,'#7c3aed').onclick=()=>lerPlanilha();
-criarBotao('3 - ORDEM',220,'#ca8a04').onclick=()=>lerOrdem();
-criarBotao('4 - PREENCHER 1ª TELA',270,'#1d4ed8').onclick=preencherPrimeiraTela;
-criarBotao('5 - ABRIR/PREENCHER NF',320,'#0f766e').onclick=preencherNF;
-criarBotao('6 - LAUDO / CLASSIFICAÇÃO',370,'#b91c1c').onclick=()=>lerLaudoClassificacao();
-criarBotao('7 - PESAGEM OCR',420,'#0ea5e9').onclick=()=>lerPesagemOCR();
-criarBotao('8 - EXECUTAR GUIADO',470,'#111827').onclick=executarGuiado;
-criarBotao('9 - CARREGAR PACOTE',520,'#9333ea').onclick=carregarPacote;
-
-alert('ROBÔ SOLUM V1 FINAL AJUSTADO CARREGADO.');
-
-})();

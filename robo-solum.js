@@ -687,4 +687,124 @@ async function lerLaudoClassificacao(file=null){
     'Ardidos: '+dados.TaxaTicket73+'\n'+
     'Avariado: '+dados.TaxaTicket75
   );
+  
 }
+  function extrairPesos(texto){
+  console.log('OCR PESAGEM:',texto);
+
+  const candidatos=[...texto.matchAll(/\b\d{2}[.,]\d{3}\b/g)]
+    .map(m=>m[0])
+    .map(n=>parseInt(numeroLimpo(n),10))
+    .filter(v=>v>=20000&&v<=90000);
+
+  const valores=[...new Set(candidatos)].sort((a,b)=>a-b);
+
+  if(valores.length>=3){
+    return {tara:String(valores[0]),bruto:String(valores[valores.length-1]),metodo:'3 pesos encontrados'};
+  }
+
+  if(valores.length===2){
+    const menor=valores[0], maior=valores[1];
+    return {tara:String(maior-menor),bruto:String(maior),metodo:'calculado: bruto - líquido'};
+  }
+
+  return {
+    tara:prompt('Digite a tara / menor peso:', ''),
+    bruto:prompt('Digite o peso bruto / maior peso:', ''),
+    metodo:'manual'
+  };
+}
+
+function processoEntrada(){
+  const proc=document.querySelector('#processo');
+  const texto=proc?proc.options[proc.selectedIndex].text:'';
+  return texto.toUpperCase().includes('ENTRADA');
+}
+
+async function lerPesagemOCR(file=null){
+  file=file||ROBO.arquivos.pesagem||await escolherArquivo('.pdf,image/*');
+
+  alert('Lendo pesagem... aguarde.');
+
+  const texto=await ocrArquivo(file);
+  const pesos=extrairPesos(texto);
+
+  const aba=[...document.querySelectorAll('*')]
+    .find(e=>e.innerText&&e.innerText.trim()==='Pesagem');
+
+  if(aba){aba.click(); await esperar(1000);}
+
+  const inputs=[...document.querySelectorAll('input')]
+    .filter(i=>!i.disabled&&i.offsetParent!==null);
+
+  const campo1=inputs.find(i=>(i.placeholder||'').toLowerCase().includes('primeiro'))||inputs[0];
+  const campo2=inputs.find(i=>(i.placeholder||'').toLowerCase().includes('segundo'))||inputs[1];
+
+  let primeiro,segundo;
+
+  if(processoEntrada()){
+    primeiro=pesos.bruto;
+    segundo=pesos.tara;
+  }else{
+    primeiro=pesos.tara;
+    segundo=pesos.bruto;
+  }
+
+  setInputCampo(campo1,primeiro); await esperar(500);
+  setInputCampo(campo2,segundo); await esperar(500);
+
+  const btn=[...document.querySelectorAll('button')]
+    .find(b=>b.innerText.trim().includes('Pesar'));
+
+  if(btn)btn.click();
+
+  alert('Pesagem preenchida. Confira antes de salvar.');
+}
+
+async function executarGuiado(){
+  if(!ROBO.arquivos.xml || !ROBO.arquivos.planilha || !ROBO.arquivos.ordem || !ROBO.arquivos.laudo || !ROBO.arquivos.pesagem){
+    return alert('Primeiro clique em 9 - CARREGAR PACOTE e selecione os 5 arquivos.');
+  }
+
+  await lerXML(ROBO.arquivos.xml);
+  await lerPlanilha(ROBO.arquivos.planilha);
+  await lerOrdem(ROBO.arquivos.ordem);
+
+  if(confirm('Preencher PRIMEIRA TELA agora?')){
+    await preencherPrimeiraTela();
+  }
+
+  alert('Confira a primeira tela e clique em GERAR TICKET manualmente.\nDepois clique OK.');
+
+  if(confirm('Já gerou o ticket? Abrir/preencher NF agora?')){
+    await preencherNF();
+  }
+
+  alert('Confira e SALVE A NF manualmente.\nDepois clique OK.');
+
+  if(confirm('Preencher CLASSIFICAÇÃO agora?')){
+    await lerLaudoClassificacao(ROBO.arquivos.laudo);
+  }
+
+  alert('Confira e salve a classificação manualmente.\nDepois clique OK.');
+
+  if(confirm('Preencher PESAGEM agora?')){
+    await lerPesagemOCR(ROBO.arquivos.pesagem);
+  }
+
+  alert('EXECUÇÃO GUIADA FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
+}
+
+criarBotao('1 - XML',120,'#065f46').onclick=()=>lerXML();
+criarBotao('2 - PLANILHA',170,'#7c3aed').onclick=()=>lerPlanilha();
+criarBotao('3 - ORDEM',220,'#ca8a04').onclick=()=>lerOrdem();
+criarBotao('4 - PREENCHER 1ª TELA',270,'#1d4ed8').onclick=preencherPrimeiraTela;
+criarBotao('5 - ABRIR/PREENCHER NF',320,'#0f766e').onclick=preencherNF;
+criarBotao('6 - LAUDO / CLASSIFICAÇÃO',370,'#b91c1c').onclick=()=>lerLaudoClassificacao();
+criarBotao('7 - PESAGEM OCR',420,'#0ea5e9').onclick=()=>lerPesagemOCR();
+criarBotao('8 - EXECUTAR GUIADO',470,'#111827').onclick=executarGuiado;
+criarBotao('9 - CARREGAR PACOTE',520,'#9333ea').onclick=carregarPacote;
+
+alert('ROBÔ SOLUM V1 FINAL AJUSTADO CARREGADO.');
+
+})();

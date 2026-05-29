@@ -276,11 +276,12 @@ async function lerOrdem(file=null){
   if(!texto || texto.length<50) texto=await ocrArquivo(file);
 
   let placa='';
-  const mPlaca=
-    texto.match(/CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/[A-Z]{3}\d[A-Z0-9]\d{2}/);
+ const mPlaca=
+  texto.match(/CARRO\s+DE\s+PLACA\s*(?:N[º°]?\s*)?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+  texto.match(/[A-Z]{3}\d[A-Z0-9]\d{2}/);
 
   if(mPlaca) placa=mPlaca[1]||mPlaca[0];
 
@@ -292,10 +293,11 @@ async function lerOrdem(file=null){
   else if(mUfPlaca) uf=mUfPlaca[2].toUpperCase();
 
   let motorista='';
-  const mMotorista=
-    texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-    texto.match(/Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Contato/i) ||
-    texto.match(/MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i);
+ const mMotorista=
+  texto.match(/MOTORISTA\s+SR\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
+  texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
+  texto.match(/Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Contato/i) ||
+  texto.match(/MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i);
 
   if(mMotorista) motorista=mMotorista[1].trim();
 
@@ -366,7 +368,14 @@ async function preencherPrimeiraTela(){
 
   setInput('nomeMotorista',ROBO.ordem.motorista); await esperar(500);
   setSelectIndex('operacao',4); await esperar(500);
-  setSelectIndex('material',3); await esperar(500);
+  if(!setSelectTexto('material','SOJA EM GRÃOS')){
+  if(!setSelectTexto('material','SOJA EM GRAOS')){
+    if(!setSelectTexto('material','SOJA')){
+      setSelectIndex('material',3);
+    }
+  }
+}
+await esperar(500);
   setSelectIndex('transgenia',2); await esperar(500);
   setSelectIndex('safra',6); await esperar(500);
   setSelectIndex('deposito',3); await esperar(500);

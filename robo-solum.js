@@ -98,8 +98,6 @@ function ajustarTipoVeiculo(tipo){
   .trim();
 }
 
-}
-
 function numeroLimpo(v){return String(v||'').replace(/[^\d]/g,'');}
 
 async function arquivoParaCanvas(file){

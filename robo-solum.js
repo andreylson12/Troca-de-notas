@@ -223,22 +223,43 @@ async function lerXML(file=null){
 
 async function lerPlanilha(file=null){
   file=file||ROBO.arquivos.planilha||await escolherArquivo('.xlsx,.xls,.xlsm,.csv');
+
   const buffer=await file.arrayBuffer();
   const wb=XLSX.read(buffer,{type:'array'});
   const ws=wb.Sheets[wb.SheetNames[0]];
   const linhas=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
 
   const dados=[];
-  for(let i=1;i<linhas.length;i++){
-    const r=linhas[i];
+
+  for(const r of linhas){
+    const produtor=String(r[1]||'').trim();
+    const bp=String(r[2]||'').trim();
+
+    if(!produtor) continue;
+    if(normalizar(produtor).includes('PRODUTOR')) continue;
+    if(normalizar(produtor).includes('RESULTADOS')) continue;
+
     dados.push({
-      centro:r[0],
-      produtor:r[1],
-      bp:r[2],
-      endRemessa:r[3],
-      bpRemessa:r[4],
-      op:r[5]
+      centro:r[0]||'',
+      produtor:r[1]||'',
+      bp:r[2]||'',
+      endRemessa:r[3]||'',
+      bpRemessa:r[4]||'',
+      op:r[5]||'',
+      produtorSaida:r[6]||'',
+      oflLv:r[7]||'',
+      contrato:r[8]||'',
+      opSaida:r[9]||'',
+      descarga:r[10]||''
     });
+  }
+
+  ROBO.planilha=dados.filter(x=>x.produtor);
+
+  console.log('PLANILHA CORRIGIDA:',ROBO.planilha);
+
+  alert('Planilha carregada: '+ROBO.planilha.length+' registros válidos');
+}
   }
 
   ROBO.planilha=dados.filter(x=>x.produtor);

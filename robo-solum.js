@@ -89,9 +89,9 @@ function nomeUF(sigla){
   const mapa={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
   return mapa[String(sigla||'').toUpperCase()]||'';
 }
+
 function ajustarTipoVeiculo(tipo){
   return String(tipo||'')
-  .replace(/RODO[-\s]?TREM\s*9\s*EIXOS?/i,'RODO-TREM 9 EIXO')
   .replace(/RODOTREM\s*9\s*EIXOS?/i,'RODO-TREM 9 EIXO')
   .replace(/BITREM\s*7\s*EIXOS?/i,'BI-TREM 7 EIXO')
   .replace(/CARRETA\s*LS\s*6\s*EIXOS?/i,'CARRETA LS 6 EIXO')
@@ -153,17 +153,12 @@ async function carregarPacote(){
 
     if(nome.endsWith('.xml')){
       ROBO.arquivos.xml=f;
-    }else if(
-      nome.endsWith('.xlsx') ||
-      nome.endsWith('.xls') ||
-      nome.endsWith('.xlsm') ||
-      nome.endsWith('.csv')
-    ){
+    }else if(nome.endsWith('.xlsx')||nome.endsWith('.xls')||nome.endsWith('.xlsm')||nome.endsWith('.csv')){
       ROBO.arquivos.planilha=f;
     }
   }
 
-  const docs=files.filter(f=>(
+  const docs=files.filter(f=>!ROBO.arquivos.xml && false || (
     !f.name.toLowerCase().endsWith('.xml') &&
     !f.name.toLowerCase().endsWith('.xlsx') &&
     !f.name.toLowerCase().endsWith('.xls') &&
@@ -172,47 +167,17 @@ async function carregarPacote(){
   ));
 
   for(const f of docs){
-
     let texto=await textoPDF(f);
-
-    if(!texto || texto.length<50){
-      texto=await ocrArquivo(f);
-    }
+    if(!texto || texto.length<50) texto=await ocrArquivo(f);
 
     const t=normalizar(texto);
-    const nomeArq=f.name.toLowerCase();
 
-    if(
-      nomeArq.includes('laudo') ||
-      nomeArq.includes('classificacao') ||
-      nomeArq.includes('classificação')
-    ){
-      ROBO.arquivos.laudo=f;
-    }
-    else if(
-      nomeArq.includes('balanca') ||
-      nomeArq.includes('balança') ||
-      nomeArq.includes('pesagem') ||
-      t.includes('PESAGEM') ||
-      t.includes('PESO LIQUIDO')
-    ){
+    if(t.includes('PESAGEM') || t.includes('PESO LIQUIDO')){
       ROBO.arquivos.pesagem=f;
-    }
-    else if(
-      nomeArq.includes('oc') ||
-      nomeArq.includes('ordem') ||
-      t.includes('ORDEM') ||
-      t.includes('CAVALO') ||
-      t.includes('MOTORISTA')
-    ){
-      ROBO.arquivos.ordem=f;
-    }
-    else if(
-      t.includes('UMIDADE') ||
-      t.includes('IMPUREZAS') ||
-      t.includes('CLASSIFICACAO')
-    ){
+    }else if(t.includes('UMIDADE') || t.includes('IMPUREZAS') || t.includes('CLASSIFICACAO')){
       ROBO.arquivos.laudo=f;
+    }else if(t.includes('ORDEM') || t.includes('CAVALO') || t.includes('MOTORISTA')){
+      ROBO.arquivos.ordem=f;
     }
   }
 
@@ -283,16 +248,13 @@ async function lerOrdem(file=null){
   if(!texto || texto.length<50) texto=await ocrArquivo(file);
 
   let placa='';
-const mPlaca=
-  texto.match(/CARRO\s+DE\s+PLACA\s*(?:N[º°]?\s*)?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/PLACA\s+CAVALO\s*:?\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/CAVALO\s*:\s*(?:RODO\s*TREM\s*9\s*EIXO\s*)?([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/VE[IÍ]CULO\s+([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-  texto.match(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/);
+  const mPlaca=
+    texto.match(/CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+    texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+    texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
+    texto.match(/[A-Z]{3}\d[A-Z0-9]\d{2}/);
 
-if(mPlaca) placa=(mPlaca[1]||mPlaca[0]).replace('-','');
+  if(mPlaca) placa=mPlaca[1]||mPlaca[0];
 
   let uf='';
   const mUfCavalo=texto.match(/CAVALO\s*:\s*[A-Z]{3}\d[A-Z0-9]\d{2}[\s\S]{0,160}?\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s*\/\s*[A-Z]/i);
@@ -302,26 +264,21 @@ if(mPlaca) placa=(mPlaca[1]||mPlaca[0]).replace('-','');
   else if(mUfPlaca) uf=mUfPlaca[2].toUpperCase();
 
   let motorista='';
-const mMotorista=
-  texto.match(/MOTORISTA\s+SR\.?\s*:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-  texto.match(/SOLICITAMOS\s+ENTREGAR\s+AO\s+MOTORISTA\s+SR\.?\s*:?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-  texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-  texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)(?:\s{2,}|$)/i) ||
-  texto.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+PREVIS/i);
+  const mMotorista=
+    texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
+    texto.match(/Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Contato/i) ||
+    texto.match(/MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i);
 
-if(mMotorista) motorista=mMotorista[1].trim();
+  if(mMotorista) motorista=mMotorista[1].trim();
 
   let tipo='';
   const mTipo=
-  texto.match(/RODO[-\s]?TREM\s*9\s*EIXOS?/i) ||
-  texto.match(/RODOTREM\s*9\s*EIXOS?/i) ||
-  texto.match(/BITREM\s*7\s*EIXOS?/i) ||
-  texto.match(/CARRETA\s*LS\s*6\s*EIXOS?/i) ||
-  texto.match(/VE[IÍ]CULO\s*:\s*([A-Z0-9\s]+?)(?:QUANTIDADE|$)/i) ||
-  texto.match(/OBS\s*:\s*([A-Z0-9\-\s]*TREM\s*9\s*EIXO)/i) ||
-  texto.match(/TIPO DO VEICULO\s*([A-Z0-9\s]+)/i);
+    texto.match(/RODOTREM\s*9\s*EIXOS?/i) ||
+    texto.match(/BITREM\s*7\s*EIXOS?/i) ||
+    texto.match(/CARRETA\s*LS\s*6\s*EIXOS?/i) ||
+    texto.match(/TIPO DE VEICULO\s*:\s*([A-Z0-9\s]+?)(?:Data|$)/i);
 
-if(mTipo) tipo=mTipo[1]?mTipo[1].trim():mTipo[0].trim();
+  if(mTipo) tipo=mTipo[1]?mTipo[1].trim():mTipo[0].trim();
 
   ROBO.ordem={
     texto,
@@ -381,14 +338,7 @@ async function preencherPrimeiraTela(){
 
   setInput('nomeMotorista',ROBO.ordem.motorista); await esperar(500);
   setSelectIndex('operacao',4); await esperar(500);
-  if(!setSelectTexto('material','SOJA EM GRÃOS')){
-  if(!setSelectTexto('material','SOJA EM GRAOS')){
-    if(!setSelectTexto('material','SOJA')){
-      setSelectIndex('material',3);
-    }
-  }
-}
-await esperar(500);
+  setSelectIndex('material',3); await esperar(500);
   setSelectIndex('transgenia',2); await esperar(500);
   setSelectIndex('safra',6); await esperar(500);
   setSelectIndex('deposito',3); await esperar(500);
@@ -465,231 +415,40 @@ async function lerLaudoClassificacao(file=null){
 
   alert('Lendo laudo... aguarde.');
 
-  function limparValor(v){
-    if(!v)return '0.00';
-    return String(v)
-      .replace(',', '.')
-      .replace(/[^\d.]/g,'')
-      .trim();
-  }
+  const texto=await ocrArquivo(file);
 
-  function pegarCampo(texto,regex){
-    const m=texto.match(regex);
-    if(!m)return '';
-    return limparValor(m[1]);
-  }
+  console.log('OCR LAUDO:',texto);
 
-  function extrairDadosLaudo(texto){
-    texto=String(texto||'')
-      .replace(/\r/g,' ')
-      .replace(/\n/g,' ')
-      .replace(/\s+/g,' ');
-
-    return {
-      TaxaTicket70:pegarCampo(
-        texto,
-        /UMIDADE\s*:?\s*(\d+[.,]\d+)/i
-      ),
-
-      TaxaTicket71:pegarCampo(
-        texto,
-        /(?:IMPUREZAS?|MAT\.?\s*ESTRANHAS\s*E\s*IMPUREZAS?|MATERIAS?.*?IMP\.?)\s*:?\s*(\d+[.,]\d+)/i
-      ),
-
-      TaxaTicket72:pegarCampo(
-        texto,
-        /ESVERDEADOS\s*:?\s*(\d+[.,]\d+)/i
-      ),
-
-      TaxaTicket73:pegarCampo(
-        texto,
-        /ARDIDOS\s*:?\s*(\d+[.,]\d+)/i
-      ),
-
-      TaxaTicket74:pegarCampo(
-        texto,
-        /(?:QUEBRADOS\s*\/?\s*AMASSADOS|QUEBRADOS)\s*:?\s*(\d+[.,]\d+)/i
-      ),
-
-      TaxaTicket75:pegarCampo(
-        texto,
-        /(?:TOTAL\s+DE\s+AVARIADOS|AVARIADOS)\s*:?\s*(\d+[.,]\d+)/i
-      )
-    };
-  }
-
-  function contarCampos(dados){
-    return Object.values(dados)
-      .filter(v=>v && v!=='0.00' && v!=='0')
-      .length;
-  }
-
-  function binarizarCanvas(canvas){
-    const ctx=canvas.getContext('2d');
-    const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-
-    for(let i=0;i<img.data.length;i+=4){
-      const media=(
-        img.data[i]+
-        img.data[i+1]+
-        img.data[i+2]
-      )/3;
-
-      const cor=media>165?255:0;
-
-      img.data[i]=cor;
-      img.data[i+1]=cor;
-      img.data[i+2]=cor;
-    }
-
-    ctx.putImageData(img,0,0);
-    return canvas;
-  }
-
-  async function ocrCanvas(canvas){
-    const result=await Tesseract.recognize(
-      canvas,
-      'por',
-      {
-        tessedit_pageseg_mode: 6
-      }
-    );
-
-    return result.data.text;
-  }
-
-  let textos=[];
-
-  // 1 - tenta texto direto do PDF
-  try{
-    const textoDireto=await textoPDF(file);
-    if(textoDireto && textoDireto.length>50){
-      textos.push(textoDireto);
-    }
-  }catch(e){
-    console.log('Texto PDF não disponível',e);
-  }
-
-  // 2 - OCR normal
-  try{
-    const canvas=await arquivoParaCanvas(file);
-    const textoOCR=await ocrCanvas(canvas);
-    textos.push(textoOCR);
-  }catch(e){
-    console.log('OCR normal falhou',e);
-  }
-
-  // 3 - OCR com preto/branco
-  try{
-    const canvas2=await arquivoParaCanvas(file);
-    binarizarCanvas(canvas2);
-    const textoContraste=await ocrCanvas(canvas2);
-    textos.push(textoContraste);
-  }catch(e){
-    console.log('OCR contraste falhou',e);
-  }
-
-  let melhorDados=null;
-  let melhorTexto='';
-  let melhorQtd=-1;
-
-  for(const txt of textos){
-    const dados=extrairDadosLaudo(txt);
-    const qtd=contarCampos(dados);
-
-    if(qtd>melhorQtd){
-      melhorQtd=qtd;
-      melhorDados=dados;
-      melhorTexto=txt;
-    }
-  }
-
-  let dados=melhorDados||{
-    TaxaTicket70:'',
-    TaxaTicket71:'',
-    TaxaTicket72:'',
-    TaxaTicket73:'',
-    TaxaTicket74:'',
-    TaxaTicket75:''
+  const dados={
+    TaxaTicket70:pegarNumero(texto,/Umidade\s*:\s*(\d+[,.]\d+)/i),
+    TaxaTicket71:(()=>{
+      const m=texto.match(/(?:Mat.*?Impurezas?|Impurezas?)\s*:\s*(\d+[,.]\d+)/i);
+      if(!m)return '0.00';
+      let bruto=m[1];
+      if(bruto.includes('89,'))bruto=bruto.replace('89,','0,');
+      let n=parseFloat(bruto.replace(',','.'));
+      if(n>10)n=n/100;
+      return n.toFixed(2);
+    })(),
+    TaxaTicket72:pegarNumero(texto,/Esverdeados\s*:\s*(\d+[,.]\d+)/i),
+    TaxaTicket73:pegarNumero(texto,/Ardidos\s*:\s*(\d+[,.]\d+)/i),
+    TaxaTicket74:pegarNumero(texto,/Quebrados\s*\/?\s*Amassados\s*:\s*(\d+[,.]\d+)/i),
+    TaxaTicket75:pegarNumero(texto,/Total\s*(?:de\s*)?Avariad[oa]s?\s*:\s*(\d+[,.]\d+)/i)
   };
 
-  console.log('MELHOR OCR LAUDO:',melhorTexto);
-  console.log('DADOS EXTRAÍDOS LAUDO:',dados);
-
-  // 4 - fallback manual inteligente
-  if(contarCampos(dados)<3){
-
-    alert(
-      'OCR do laudo ficou fraco.\n'+
-      'Vou pedir só os campos necessários.'
-    );
-
-    dados.TaxaTicket70=prompt(
-      'Digite UMIDADE:',
-      dados.TaxaTicket70||''
-    ) || '0.00';
-
-    dados.TaxaTicket71=prompt(
-      'Digite IMPUREZA:',
-      dados.TaxaTicket71||''
-    ) || '0.00';
-
-    dados.TaxaTicket74=prompt(
-      'Digite QUEBRADOS / AMASSADOS:',
-      dados.TaxaTicket74||''
-    ) || '0.00';
-
-    dados.TaxaTicket72=prompt(
-      'Digite ESVERDEADOS:',
-      dados.TaxaTicket72||'0.00'
-    ) || '0.00';
-
-    dados.TaxaTicket73=prompt(
-      'Digite ARDIDOS:',
-      dados.TaxaTicket73||'0.00'
-    ) || '0.00';
-
-    dados.TaxaTicket75=prompt(
-      'Digite TOTAL AVARIADO:',
-      dados.TaxaTicket75||''
-    ) || '0.00';
-  }
-
-  // garante ponto
-  for(const k in dados){
-    dados[k]=limparValor(dados[k]||'0.00');
-  }
-
   const aba=[...document.querySelectorAll('*')]
-    .find(e=>
-      e.innerText &&
-      e.innerText.trim()==='Classificação'
-    );
+    .find(e=>e.innerText&&e.innerText.trim()==='Classificação');
 
-  if(aba){
-    aba.click();
-    await esperar(1500);
-  }
+  if(aba){aba.click(); await esperar(1500);}
 
   for(const id in dados){
-    setInputCampo(
-      document.querySelector('#'+id),
-      dados[id]
-    );
+    setInputCampo(document.querySelector('#'+id),dados[id]);
   }
 
-  alert(
-    'Classificação preenchida:\n\n'+
-    'Umidade: '+dados.TaxaTicket70+'\n'+
-    'Impureza: '+dados.TaxaTicket71+'\n'+
-    'Quebrados: '+dados.TaxaTicket74+'\n'+
-    'Esverdeados: '+dados.TaxaTicket72+'\n'+
-    'Ardidos: '+dados.TaxaTicket73+'\n'+
-    'Avariado: '+dados.TaxaTicket75
-  );
-  
+  alert('Classificação preenchida. Confira antes de salvar.');
 }
-  function extrairPesos(texto){
+
+function extrairPesos(texto){
   console.log('OCR PESAGEM:',texto);
 
   const candidatos=[...texto.matchAll(/\b\d{2}[.,]\d{3}\b/g)]

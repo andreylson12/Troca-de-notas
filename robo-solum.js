@@ -423,21 +423,31 @@ async function lerOrdem(file=null){
 
 function buscarRemessa(){
   if(!ROBO.xml)return null;
-  const prod=normalizar(ROBO.xml.produtor);
+
+  const prod=normalizar(ROBO.xml.produtor)
+    .replace(/\bS A\b/g,'SA')
+    .replace(/\bLTDA\b/g,'LTDA');
 
   let linha=ROBO.planilha.find(l=>{
-    const nome=normalizar(l.produtor);
-    return nome.includes(prod)||prod.includes(nome);
+    const nome=normalizar(l.produtor)
+      .replace(/\bS A\b/g,'SA')
+      .replace(/\bLTDA\b/g,'LTDA');
+
+    return nome.includes(prod) || prod.includes(nome);
   });
 
   if(!linha){
     linha=ROBO.planilha.find(l=>{
-      const nome=normalizar(l.produtor);
-      return prod.split(' ').every(p=>nome.includes(p));
+      const nome=normalizar(l.produtor)
+        .replace(/\bS A\b/g,'SA')
+        .replace(/\bLTDA\b/g,'LTDA');
+
+      const partes=prod.split(' ').filter(p=>p.length>2);
+      return partes.every(p=>nome.includes(p));
     });
   }
 
-  console.log('REMESSA:',linha);
+  console.log('REMESSA ENCONTRADA:',linha);
   return linha;
 }
 

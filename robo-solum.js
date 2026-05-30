@@ -245,52 +245,154 @@ async function lerOrdem(file=null){
   file=file||ROBO.arquivos.ordem||await escolherArquivo('.pdf,image/*');
 
   let texto=await textoPDF(file);
-  if(!texto || texto.length<50) texto=await ocrArquivo(file);
+  if(!texto || texto.length<80) texto=await ocrArquivo(file);
 
-  let placa='';
-  const mPlaca=
-    texto.match(/CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/P\.\s*CAVALO\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,50}?([A-Z]{3}\d[A-Z0-9]\d{2})/i) ||
-    texto.match(/[A-Z]{3}\d[A-Z0-9]\d{2}/);
+  const textoLimpo=String(texto||'').replace(/\s+/g,' ').trim();
+  const textoN=normalizar(textoLimpo);
 
-  if(mPlaca) placa=mPlaca[1]||mPlaca[0];
+  function achar(...regexes){
+    for(const rx of regexes){
+      const m=textoLimpo.match(rx);
+      if(m){
+        for(let i=1;i<m.length;i++){
+          if(m[i]) return String(m[i]).replace(/\s+/g,' ').trim();
+        }
+        return String(m[0]).replace(/\s+/g,' ').trim();
+      }
+    }
+    return '';
+  }
 
-  let uf='';
-  const mUfCavalo=texto.match(/CAVALO\s*:\s*[A-Z]{3}\d[A-Z0-9]\d{2}[\s\S]{0,160}?\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s*\/\s*[A-Z]/i);
-  const mUfPlaca=texto.match(/PLACA\s*DO\s*VE[IÍ]CULO[\s\S]{0,100}?([A-Z]{3}\d[A-Z0-9]\d{2})[\s\S]{0,80}?\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+  function acharN(...regexes){
+    for(const rx of regexes){
+      const m=textoN.match(rx);
+      if(m){
+        for(let i=1;i<m.length;i++){
+          if(m[i]) return String(m[i]).replace(/\s+/g,' ').trim();
+        }
+        return String(m[0]).replace(/\s+/g,' ').trim();
+      }
+    }
+    return '';
+  }
 
-  if(mUfCavalo) uf=mUfCavalo[1].toUpperCase();
-  else if(mUfPlaca) uf=mUfPlaca[2].toUpperCase();
+  function limparPlaca(v){
+    return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').trim();
+  }
 
-  let motorista='';
-  const mMotorista=
-    texto.match(/MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i) ||
-    texto.match(/Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Contato/i) ||
-    texto.match(/MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i);
+  const ufs='AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO';
 
-  if(mMotorista) motorista=mMotorista[1].trim();
+  const placaCavalo=limparPlaca(achar(
+    /Placa\s*cavalo\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i,
+    /P\.?\s*Cavalo\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i,
+    /Cavalo\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i
+  ));
 
-  let tipo='';
-  const mTipo=
-    texto.match(/RODOTREM\s*9\s*EIXOS?/i) ||
-    texto.match(/BITREM\s*7\s*EIXOS?/i) ||
-    texto.match(/CARRETA\s*LS\s*6\s*EIXOS?/i) ||
-    texto.match(/TIPO DE VEICULO\s*:\s*([A-Z0-9\s]+?)(?:Data|$)/i);
+  const placaCarreta1=limparPlaca(achar(
+    /Placa\s*carreta\s*1\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i,
+    /Carreta\s*1\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})/i
+  ));
 
-  if(mTipo) tipo=mTipo[1]?mTipo[1].trim():mTipo[0].trim();
+  const todasPlacas=[...textoLimpo.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)].map(m=>limparPlaca(m[0]));
+  let placa=placaCavalo || '';
+  let placaCarreta=placaCarreta1 || '';
+
+  if(!placa && todasPlacas.length){
+    const diferentes=todasPlacas.filter(p=>p && p!==placaCarreta);
+    placa=diferentes[0]||todasPlacas[0]||'';
+  }
+
+  let motorista=achar(
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]+?)\s+(?:Bairro|Fone|CPF|Identidade|RG|CEP|Cidade)/i,
+    /Motorista\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]+?)\s+(?:Bairro|Fone|CPF|Identidade|RG|CEP|Cidade)/i
+  ).replace(/\bCPF\b.*$/i,'').trim();
+
+  const cpfMotorista=numeroLimpo(achar(
+    /CPF\s*:\s*([\d\.\-\/]+)/i,
+    /C\.?P\.?F\.?\s*[:\-]?\s*([\d\.\-\/]+)/i
+  ));
+
+  const cnh=numeroLimpo(achar(
+    /C\.?\s*N\.?\s*H\.?\s*:\s*(\d+)/i,
+    /CNH\s*:\s*(\d+)/i
+  ));
+
+  let tipo=achar(
+    /Tipo\s*:\s*(RODO\s*TREM\s*9\s*EIXOS?)/i,
+    /Tipo\s*:\s*(BITREM\s*7\s*EIXOS?)/i,
+    /Tipo\s*:\s*(CARRETA\s*LS\s*6\s*EIXOS?)/i,
+    /Tipo\s*:\s*([A-Z]{1,15})(?:\s+Renavam|\s+Modelo|\s+Ano|\s+Placa|\s+Obs|$)/i,
+    /(RODOTREM\s*9\s*EIXOS?)/i,
+    /(BITREM\s*7\s*EIXOS?)/i,
+    /(CARRETA\s*LS\s*6\s*EIXOS?)/i,
+    /TIPO\s*DE\s*VE[IÍ]CULO\s*:\s*([A-Z0-9\s]+?)(?:Data|$)/i
+  );
+
+  const eixos=achar(/Eixos?\s*:\s*(\d+)/i);
+
+  let tipoVeiculo='';
+  const tipoN=normalizar(tipo);
+  if(tipoN==='LS' || tipoN.includes('LS')){
+    tipoVeiculo='CARRETA LS 6 EIXO';
+  }else if(tipoN.includes('RODO')){
+    tipoVeiculo='RODO-TREM 9 EIXO';
+  }else if(tipoN.includes('BITREM') || tipoN.includes('BI TREM')){
+    tipoVeiculo='BI-TREM 7 EIXO';
+  }else{
+    tipoVeiculo=ajustarTipoVeiculo(tipo);
+  }
+
+  let uf=acharN(
+    new RegExp('CIDADE\\s*:\\s*[A-Z\\s]+\\/('+ufs+')\\b','i'),
+    new RegExp('CIDADE\\s*[:\\-]\\s*[A-Z\\s]+\\b('+ufs+')\\b','i'),
+    new RegExp('ORIGEM\\s*[:\\-][\\s\\S]{0,80}?\\b('+ufs+')\\b','i'),
+    new RegExp('DESTINO\\s*[:\\-][\\s\\S]{0,80}?\\b('+ufs+')\\b','i'),
+    new RegExp('MOTORISTA[\\s\\S]{0,260}?UF\\s*[:\\-]?\\s*('+ufs+')\\b','i')
+  ).toUpperCase();
+
+  const mercadoria=achar(
+    /Mercadoria\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s]+?)\s+Esp[eé]cie/i,
+    /Mercadoria\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s]+?)\s+Quant/i
+  );
+
+  const especie=achar(
+    /Esp[eé]cie\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s]+?)\s+(?:Quant|Peso|Autorizamos|$)/i
+  );
+
+  const transportadora=achar(
+    /(TRANSPORTES\s+FOB\s+LTDA)/i,
+    /Embarcador\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s\.]+?)\s+CNPJ/i
+  );
 
   ROBO.ordem={
-    texto,
+    texto:textoLimpo,
     placa,
+    placaCavalo:placa,
+    placaCarreta,
     uf,
     ufNome:nomeUF(uf),
     motorista,
-    tipoVeiculo:ajustarTipoVeiculo(tipo)
+    cpfMotorista,
+    cnh,
+    tipoBruto:tipo,
+    eixos,
+    tipoVeiculo,
+    mercadoria,
+    especie,
+    transportadora
   };
 
-  console.log('ORDEM:',ROBO.ordem);
-  alert('Ordem carregada:\nPlaca: '+ROBO.ordem.placa+'\nUF: '+ROBO.ordem.ufNome+'\nMotorista: '+ROBO.ordem.motorista+'\nTipo: '+ROBO.ordem.tipoVeiculo);
+  console.log('ORDEM CORRIGIDA:',ROBO.ordem);
+  alert(
+    'Ordem carregada:\n\n'+
+    'Placa cavalo: '+(ROBO.ordem.placaCavalo||'NÃO ACHOU')+'\n'+
+    'Carreta 1: '+(ROBO.ordem.placaCarreta||'NÃO ACHOU')+'\n'+
+    'UF: '+(ROBO.ordem.uf||'NÃO ACHOU')+' '+(ROBO.ordem.ufNome||'')+'\n'+
+    'Motorista: '+(ROBO.ordem.motorista||'NÃO ACHOU')+'\n'+
+    'CPF: '+(ROBO.ordem.cpfMotorista||'NÃO ACHOU')+'\n'+
+    'CNH: '+(ROBO.ordem.cnh||'NÃO ACHOU')+'\n'+
+    'Tipo: '+(ROBO.ordem.tipoVeiculo||ROBO.ordem.tipoBruto||'NÃO ACHOU')
+  );
 }
 
 function buscarRemessa(){
@@ -321,7 +423,7 @@ async function preencherPrimeiraTela(){
   setSelectIndex('processo',1); await esperar(500);
   setSelectIndex('tipoTransporte',4); await esperar(500);
 
-  const placaFinal=ROBO.xml.placa||ROBO.ordem.placa;
+  const placaFinal=(ROBO.ordem&&ROBO.ordem.placaCavalo)||ROBO.ordem.placa||ROBO.xml.placa;
   setInput('placa',placaFinal); await esperar(500);
 
   const ufFinal=ROBO.ordem.ufNome||nomeUF(ROBO.xml.uf);
@@ -337,6 +439,12 @@ async function preencherPrimeiraTela(){
   await esperar(500);
 
   setInput('nomeMotorista',ROBO.ordem.motorista); await esperar(500);
+
+  // Campos extras, quando existirem na tela:
+  setInput('cpfMotorista',ROBO.ordem.cpfMotorista||''); await esperar(300);
+  setInput('cnh',ROBO.ordem.cnh||''); await esperar(300);
+  setInput('placaCavalo',ROBO.ordem.placaCavalo||ROBO.ordem.placa||''); await esperar(300);
+  setInput('placaCarreta',ROBO.ordem.placaCarreta||''); await esperar(300);
   setSelectIndex('operacao',4); await esperar(500);
   setSelectIndex('material',3); await esperar(500);
   setSelectIndex('transgenia',2); await esperar(500);
@@ -564,6 +672,6 @@ criarBotao('7 - PESAGEM OCR',420,'#0ea5e9').onclick=()=>lerPesagemOCR();
 criarBotao('8 - EXECUTAR GUIADO',470,'#111827').onclick=executarGuiado;
 criarBotao('9 - CARREGAR PACOTE',520,'#9333ea').onclick=carregarPacote;
 
-alert('ROBÔ SOLUM V1 FINAL AJUSTADO CARREGADO.');
+alert('ROBÔ SOLUM V2 CORRIGIDO - ORDEM FOB / PLACA CAVALO CARREGADO.');
 
 })();

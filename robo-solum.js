@@ -260,12 +260,6 @@ async function lerPlanilha(file=null){
 
   alert('Planilha carregada: '+ROBO.planilha.length+' registros válidos');
 }
-  }
-
-  ROBO.planilha=dados.filter(x=>x.produtor);
-  console.log('PLANILHA:',ROBO.planilha);
-  alert('Planilha carregada: '+ROBO.planilha.length+' registros');
-}
 
 async function lerOrdem(file=null){
   file=file||ROBO.arquivos.ordem||await escolherArquivo('.pdf,image/*');

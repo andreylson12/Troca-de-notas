@@ -18,9 +18,14 @@ const ROBO={xml:null,planilha:[],ordem:null,arquivos:{}};
 const esperar=ms=>new Promise(r=>setTimeout(r,ms));
 
 function normalizar(t){
-  return String(t||'').toUpperCase().normalize('NFD')
-  .replace(/[\u0300-\u036f]/g,'').replace(/-/g,' ')
-  .replace(/\s+/g,' ').trim();
+  return String(t||'')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[.\-\/,;:()]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+
 }
 
 function criarBotao(txt,top,cor){

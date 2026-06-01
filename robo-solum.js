@@ -321,26 +321,17 @@ if(ehMotz){
 
   const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
 
-  cpfMotorista=cpfMotzMatch
-    ? cpfMotzMatch[0].replace(/\D/g,'')
-    : '';
+  cpfMotorista=cpfMotzMatch ? cpfMotzMatch[0].replace(/\D/g,'') : '';
 
   if(cpfMotzMatch){
-
     const antesCpf=textoLimpo.slice(0, cpfMotzMatch.index).trim();
     const depoisCpf=textoLimpo.slice(cpfMotzMatch.index + cpfMotzMatch[0].length).trim();
 
-    const motzNome=antesCpf.match(
-      /TRANSPORTES\s+LTDA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)$/i
-    );
-
+    const motzNome=antesCpf.match(/TRANSPORTES\s+LTDA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)$/i);
     motorista=motzNome ? motzNome[1].trim() : '';
 
     const fimTrecho=depoisCpf.search(/GRANEL|PEDIDO|SOJA|EMITENTE|DATA|CNH|VOLUME/i);
-
-    const trechoPlacas=fimTrecho>=0
-      ? depoisCpf.slice(0,fimTrecho)
-      : depoisCpf;
+    const trechoPlacas=fimTrecho>=0 ? depoisCpf.slice(0,fimTrecho) : depoisCpf;
 
     const placasMotz=[...trechoPlacas.matchAll(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/g)]
       .map(x=>limparPlaca(x[0]))
@@ -352,25 +343,11 @@ if(ehMotz){
     placaCarreta3=placasMotz[3]||'';
   }
 
-  const ufMotz=textoLimpo.match(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+  const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
 
-  uf=ufMotz
-    ? ufMotz[1].toUpperCase()
-    : '';
+  uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
 
-  if(!uf){
-   const ufsMotz=[...textoLimpo.matchAll(
-  /\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi
-)];
-
-if(ufsMotz.length){
-  uf=ufsMotz[ufsMotz.length-1][1].toUpperCase();
-}else{
-  uf='';
-}
-  
   cnh='';
-
   tipoBruto='RODOTREM 9 EIXO';
   tipoVeiculo='RODO-TREM 9 EIXO';
 

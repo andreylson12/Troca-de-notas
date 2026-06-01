@@ -265,7 +265,11 @@ async function lerOrdem(file=null){
   file=file||ROBO.arquivos.ordem||await escolherArquivo('.pdf,image/*');
 
   let texto=await textoPDF(file);
-  if(!texto || texto.length<80) texto=await ocrArquivo(file);
+if(!texto || texto.length<80) texto=await ocrArquivo(file);
+
+console.log("========== TEXTO BRUTO ==========");
+console.log(texto);
+console.log("=================================");
 
   const textoLimpo=String(texto||'').replace(/\s+/g,' ').trim();
 

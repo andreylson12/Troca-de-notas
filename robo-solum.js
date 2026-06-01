@@ -359,10 +359,16 @@ if(ehMotz){
     : '';
 
   if(!uf){
-    const ufSolta=textoLimpo.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
-    uf=ufSolta ? ufSolta[1].toUpperCase() : '';
-  }
+   const ufsMotz=[...textoLimpo.matchAll(
+  /\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi
+)];
 
+if(ufsMotz.length){
+  uf=ufsMotz[ufsMotz.length-1][1].toUpperCase();
+}else{
+  uf='';
+}
+  
   cnh='';
 
   tipoBruto='RODOTREM 9 EIXO';

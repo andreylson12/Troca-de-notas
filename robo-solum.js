@@ -614,9 +614,7 @@ function buscarRemessa(){
 }
 
 async function selecionarEnderecoRemessaPorBP(remessa){
-  const codigoRemessa = String(
-    remessa.bpRemessa || remessa.endRemessa || ''
-  ).replace(/\D/g,'');
+  const codigoRemessa = String(remessa.bpRemessa || remessa.endRemessa || '').replace(/\D/g,'');
 
   if(!codigoRemessa){
     alert('BP Remessa vazio na planilha.');
@@ -633,15 +631,9 @@ async function selecionarEnderecoRemessaPorBP(remessa){
     return false;
   }
 
-  const grupo =
-    campoPrincipal.closest('.input-group') ||
-    campoPrincipal.parentElement ||
-    document;
-
   const lupa =
-    grupo.querySelector('.fa-search, .fa-search-plus, i[class*="search"], button') ||
-    [...document.querySelectorAll('.fa-search, .fa-search-plus, i[class*="search"], button')]
-      .find(e=>e.offsetParent!==null);
+    campoPrincipal.parentElement.querySelector('.fa-search, i[class*="search"], button') ||
+    campoPrincipal.closest('div').querySelector('.fa-search, i[class*="search"], button');
 
   if(!lupa){
     alert('Não achei a lupa do Endereço de Remessa.');
@@ -651,21 +643,22 @@ async function selecionarEnderecoRemessaPorBP(remessa){
   lupa.click();
   await esperar(1500);
 
-  const painel =
-    [...document.querySelectorAll('div, aside, section, ngb-modal-window')]
-      .filter(e=>e.offsetParent!==null)
-      .find(e=>normalizar(e.innerText).includes('BUSCAR ENDERECO DE REMESSA')) ||
-    document;
+  const painel = [...document.querySelectorAll('div, aside, section')]
+    .filter(e => e.offsetParent !== null)
+    .find(e =>
+      normalizar(e.innerText || '').includes('BUSCAR ENDERECO DE REMESSA')
+    );
 
-  const campoBusca =
-    [...painel.querySelectorAll('input')]
-      .find(i=>!i.disabled && i.offsetParent!==null) ||
-    [...document.querySelectorAll('input')]
-      .reverse()
-      .find(i=>!i.disabled && i.offsetParent!==null);
+  if(!painel){
+    alert('Não achei a janela Buscar Endereço de Remessa.');
+    return false;
+  }
+
+  const campoBusca = [...painel.querySelectorAll('input')]
+    .find(i => !i.disabled && i.offsetParent !== null);
 
   if(!campoBusca){
-    alert('Não achei o campo de busca da janela de remessa.');
+    alert('Achei a janela, mas não achei o campo de busca dela.');
     return false;
   }
 
@@ -673,33 +666,31 @@ async function selecionarEnderecoRemessaPorBP(remessa){
   await esperar(300);
 
   setInputCampo(campoBusca,codigoRemessa);
-  await esperar(2300);
+  await esperar(500);
 
-  let btnSelecionar = [...document.querySelectorAll('button')]
+  campoBusca.dispatchEvent(new KeyboardEvent('keyup',{bubbles:true,key:' '}));
+  campoBusca.value = codigoRemessa + ' ';
+  campoBusca.dispatchEvent(new Event('input',{bubbles:true}));
+
+  await esperar(2500);
+
+  let btnSelecionar = [...painel.querySelectorAll('button')]
     .find(b =>
       b.offsetParent !== null &&
-      normalizar(b.innerText).includes('SELECIONAR') &&
-      normalizar(b.closest('tr')?.innerText || '').includes(normalizar(codigoRemessa))
+      normalizar(b.innerText || '').includes('SELECIONAR')
     );
 
   if(!btnSelecionar){
-    btnSelecionar = [...document.querySelectorAll('button')]
-      .find(b =>
-        b.offsetParent !== null &&
-        normalizar(b.innerText).includes('SELECIONAR')
-      );
+    alert('Achei a janela, mas não achei o botão Selecionar do BP '+codigoRemessa+'.');
+    return false;
   }
 
-  if(btnSelecionar){
-    btnSelecionar.scrollIntoView({block:'center'});
-    await esperar(300);
-    btnSelecionar.click();
-    await esperar(1200);
-    return true;
-  }
+  btnSelecionar.scrollIntoView({block:'center'});
+  await esperar(300);
+  btnSelecionar.click();
 
-  alert('Achei a janela, mas não achei o botão Selecionar do BP '+codigoRemessa+'.');
-  return false;
+  await esperar(1200);
+  return true;
 }
 
 async function preencherPrimeiraTela(){

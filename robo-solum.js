@@ -348,7 +348,11 @@ if(ehMotz){
     new RegExp('UF\\s*:?\\s*('+ufs+')','i')
   ).toUpperCase();
 
-  if(/RODOTREM/i.test(textoLimpo) || /RODO\s*TREM/i.test(textoLimpo)){
+  if(
+    /RODOTREM/i.test(textoLimpo) ||
+    /RODO\s*TREM/i.test(textoLimpo) ||
+    /9\s*EIXO/i.test(textoLimpo)
+  ){
     tipoBruto='RODOTREM 9 EIXO';
     tipoVeiculo='RODO-TREM 9 EIXO';
   }

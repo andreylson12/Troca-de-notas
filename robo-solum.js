@@ -711,51 +711,95 @@ async function preencherPrimeiraTela(){
 
 async function preencherNF(){
   const remessa=buscarRemessa();
-  const produtorCodigo=(remessa&&remessa.bp)?String(remessa.bp):'';
+  const produtorCodigo=(remessa&&remessa.bp)?String(remessa.bp).replace(/\D/g,''):'';
 
+  if(!ROBO.xml)return alert('XML não carregado.');
   if(!produtorCodigo)return alert('Não achei BP do produtor na planilha.');
 
+  // 1) Clicar em Nova Nota Fiscal
   const btnNovaNF=[...document.querySelectorAll('button')]
-    .find(b=>b.innerText.trim()==='Nova Nota Fiscal');
+    .find(b=>normalizar(b.innerText).includes('NOVA NOTA FISCAL'));
 
   if(btnNovaNF){
     btnNovaNF.click();
-    await esperar(2200);
+    await esperar(2500);
   }
 
-  const campoProdutor=document.querySelector('input[aria-autocomplete="list"]');
+  // 2) Selecionar produtor pelo BP
+  let campoProdutor =
+    document.querySelector('input[aria-autocomplete="list"]') ||
+    document.querySelector('input[placeholder*="Produtor"]') ||
+    document.querySelector('input[formcontrolname*="produtor"]');
 
   if(campoProdutor){
+    setInputCampo(campoProdutor,'');
+    await esperar(300);
+
     setInputCampo(campoProdutor,produtorCodigo);
-    await esperar(1800);
+    await esperar(2200);
 
-    const opcao=[...document.querySelectorAll('.ng-option')]
-      .find(o=>o.innerText.includes(produtorCodigo));
+    let opcoes=[...document.querySelectorAll('.ng-option, .ng-dropdown-panel .ng-option')]
+      .filter(o=>o.offsetParent!==null);
 
-    if(opcao)opcao.click();
+    let opcao=opcoes.find(o=>
+      normalizar(o.innerText).includes(normalizar(produtorCodigo))
+    );
+
+    if(!opcao && opcoes.length) opcao=opcoes[0];
+
+    if(opcao){
+      opcao.scrollIntoView({block:'center'});
+      await esperar(300);
+      opcao.click();
+      await esperar(1500);
+    }
   }
 
-  await esperar(1200);
-
+  // 3) Selecionar fazenda, se existir
   const fazenda=document.querySelector('#fazenda');
-  if(fazenda){
+
+  if(fazenda && fazenda.options && fazenda.options.length>1){
     fazenda.selectedIndex=1;
     fazenda.dispatchEvent(new Event('change',{bubbles:true}));
+    await esperar(1200);
   }
 
-  await esperar(1200);
+  // 4) Preencher chave da NF
+  const campoChave =
+    document.querySelector('input[formcontrolname="chave"]') ||
+    document.querySelector('input[formcontrolname*="chave"]') ||
+    document.querySelector('input[placeholder*="chave"]') ||
+    [...document.querySelectorAll('input')]
+      .find(i=>normalizar(i.placeholder||'').includes('CHAVE'));
 
-  const campoChave=
-    document.querySelector('input[formcontrolname="chave"]')||
-    document.querySelector('input[placeholder*="chave"]');
+  if(!campoChave){
+    return alert('Não achei o campo da chave da NF.');
+  }
+
+  setInputCampo(campoChave,'');
+  await esperar(300);
 
   setInputCampo(campoChave,ROBO.xml.chave);
   await esperar(1200);
 
-  const lupa=document.querySelector('.fa-search-plus.fa-input');
-  if(lupa)lupa.click();
+  // 5) Clicar na lupa/buscar da chave
+  const grupoChave =
+    campoChave.closest('.input-group') ||
+    campoChave.parentElement ||
+    document;
 
-  alert('NF preenchida pelo XML. Confira e salve a NF manualmente.');
+  const lupaChave =
+    grupoChave.querySelector('.fa-search, .fa-search-plus, i[class*="search"], button') ||
+    [...document.querySelectorAll('.fa-search, .fa-search-plus, i[class*="search"], button')]
+      .reverse()
+      .find(e=>e.offsetParent!==null);
+
+  if(lupaChave){
+    lupaChave.click();
+    await esperar(2500);
+  }
+
+  alert('NF preenchida. Confira os dados e salve a NF manualmente.');
 }
 
 function pegarNumero(texto,regex){

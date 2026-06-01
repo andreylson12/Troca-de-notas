@@ -437,20 +437,20 @@ else if(ehRodoviva){
   ).toUpperCase();
 
 if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
-  tipoBruto='RODO TREM 9 EIXO';
-  tipoVeiculo='RODO-TREM 9 EIXO';
-}
+    tipoBruto='RODO TREM 9 EIXO';
+    tipoVeiculo='RODO-TREM 9 EIXO';
+  }
 
-}
+} // FECHA RODOVIVA
 
-  else{
-    transportadora=achar(
+else{
+
+  transportadora=achar(
       /(TRANSPORTES\s+FOB\s+LTDA)/i,
       /(FRIBOM[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
       /(MOTZ[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
       /Embarcador\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s\.]+?)\s+CNPJ/i
-    );
-
+  );
     placaCavalo=limparPlaca(achar(
       /Placa\s*cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i,
       /Cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i

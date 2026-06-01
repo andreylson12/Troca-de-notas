@@ -613,6 +613,56 @@ function buscarRemessa(){
   return linha;
 }
 
+async function selecionarEnderecoRemessaPorBP(remessa){
+  const codigoRemessa = String(
+    remessa.bpRemessa || remessa.endRemessa || ''
+  ).replace(/\D/g,'');
+
+  if(!codigoRemessa){
+    alert('BP Remessa vazio na planilha.');
+    return false;
+  }
+
+  const campo =
+    document.querySelector('#enderecoRemessa') ||
+    document.querySelector('input[formcontrolname="enderecoRemessa"]') ||
+    document.querySelector('input[placeholder*="Remessa"]');
+
+  if(!campo){
+    alert('Não achei o campo Endereço de Remessa.');
+    return false;
+  }
+
+  setInputCampo(campo,'');
+  await esperar(400);
+
+  setInputCampo(campo,codigoRemessa);
+  await esperar(2000);
+
+  let linhas = [...document.querySelectorAll('tr, tbody tr, .ng-option')];
+
+  let linha = linhas.find(l =>
+    String(l.innerText || '').replace(/\D/g,'').includes(codigoRemessa)
+  );
+
+  if(!linha){
+    alert('Não achei o BP Remessa '+codigoRemessa+' na lista.');
+    return false;
+  }
+
+  const btnSelecionar = [...linha.querySelectorAll('button')]
+    .find(b => normalizar(b.innerText).includes('SELECIONAR'));
+
+  if(btnSelecionar){
+    btnSelecionar.click();
+  }else{
+    linha.click();
+  }
+
+  await esperar(1000);
+  return true;
+}
+
 async function preencherPrimeiraTela(){
   const remessa=buscarRemessa();
   if(!remessa)return alert('Produtor não encontrado na planilha.');
@@ -638,27 +688,25 @@ async function preencherPrimeiraTela(){
 
   setInput('nomeMotorista',ROBO.ordem.motorista); await esperar(500);
 
-  // Campos extras, quando existirem na tela:
   setInput('cpfMotorista',ROBO.ordem.cpfMotorista||''); await esperar(300);
   setInput('cnh',ROBO.ordem.cnh||''); await esperar(300);
   setInput('placaCavalo',ROBO.ordem.placaCavalo||ROBO.ordem.placa||''); await esperar(300);
   setInput('placaCarreta',ROBO.ordem.placaCarreta||''); await esperar(300);
+
   setSelectIndex('operacao',4); await esperar(500);
   setSelectIndex('material',3); await esperar(500);
   setSelectIndex('transgenia',2); await esperar(500);
   setSelectIndex('safra',6); await esperar(500);
   setSelectIndex('deposito',3); await esperar(500);
 
-  setInput('enderecoRemessa',remessa.endRemessa||remessa.bpRemessa);
-  await esperar(1500);
+  const okRemessa = await selecionarEnderecoRemessaPorBP(remessa);
 
-  const opcao=[...document.querySelectorAll('.ng-option')]
-  .find(o=>normalizar(o.innerText).includes(normalizar(remessa.endRemessa))||
-           normalizar(o.innerText).includes(normalizar(remessa.bpRemessa)));
+  if(!okRemessa){
+    alert('Endereço de Remessa não selecionado. Corrija antes de gerar ticket.');
+    return;
+  }
 
-  if(opcao)opcao.click();
-
-  alert('Primeira tela preenchida. Confira e clique em Gerar Ticket.');
+  alert('Primeira tela preenchida com BP Remessa. Confira e clique em Gerar Ticket.');
 }
 
 async function preencherNF(){

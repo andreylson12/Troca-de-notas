@@ -315,37 +315,66 @@ console.log("=================================");
   let tipoVeiculo='';
   let transportadora='';
 
-  if(ehMotz){
+if(ehMotz){
+
   transportadora='MOTZ TRANSPORTES LTDA';
 
-  motorista=achar(
-    /MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+\d{3}\.\d{3}\.\d{3}\-\d{2}/i,
-    /MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+PLACA/i
+  // Todas as placas encontradas
+  const placasMotz=[...textoLimpo.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
+    .map(x=>limparPlaca(x[0]))
+    .filter(Boolean);
+
+  // MOTZ: primeira placa encontrada = cavalo
+  placaCavalo=placasMotz[0]||'';
+
+  // demais placas = carretas
+  placaCarreta1=placasMotz[1]||'';
+  placaCarreta2=placasMotz[2]||'';
+  placaCarreta3=placasMotz[3]||'';
+
+  // Motorista
+  const motzMotorista=textoLimpo.match(
+    /MOTORISTA\s*:\s*(.*?)\s+\d{3}\.\d{3}\.\d{3}\-\d{2}/i
   );
 
-  placaCavalo=limparPlaca(achar(
-    /PLACA\s*CAVALO\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
-  ));
+  motorista=motzMotorista
+    ? motzMotorista[1].trim()
+    : '';
 
-  if(!placaCavalo){
-    const m=textoLimpo.match(/MOTORISTA[\s\S]{0,200}?([A-Z]{3}\d[A-Z0-9]\d{2})/i);
-    if(m) placaCavalo=limparPlaca(m[1]);
-  }
-
-  const ufCavalo=textoLimpo.match(
-    new RegExp(placaCavalo+'\\s+UF\\s*:?\\s*('+ufs+')','i')
+  // UF
+  const ufMotz=textoLimpo.match(
+    new RegExp('UF\\s*:?\\s*('+ufs+')','i')
   );
 
-  uf=ufCavalo ? ufCavalo[1].toUpperCase() : '';
+  uf=ufMotz
+    ? ufMotz[1].toUpperCase()
+    : '';
 
-  if(!uf){
-    uf=achar(new RegExp('UF\\s*:?\\s*('+ufs+')','i')).toUpperCase();
-  }
-
-  if(/RODOTREM/i.test(textoLimpo) && /9\s*EIXO/i.test(textoLimpo)){
+  // Tipo veículo
+  if(
+    /RODOTREM/i.test(textoLimpo) ||
+    /RODO\s*TREM/i.test(textoLimpo)
+  ){
     tipoBruto='RODOTREM 9 EIXO';
     tipoVeiculo='RODO-TREM 9 EIXO';
   }
+
+  // Não usamos CPF/CNH na MOTZ
+  cpfMotorista='';
+  cnh='';
+
+  console.log('MOTZ DETECTADA');
+  console.log({
+    motorista,
+    placaCavalo,
+    placaCarreta1,
+    placaCarreta2,
+    placaCarreta3,
+    uf,
+    tipoVeiculo
+  });
+
+}
 
   }
 

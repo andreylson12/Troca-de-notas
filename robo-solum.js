@@ -300,27 +300,27 @@ console.log("=================================");
     .map(m=>limparPlaca(m[0]))
     .filter(p=>p.length===7);
 
-  const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
-  const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
+ const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
+const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
+const ehPampa=/RHPAMPA|PAMPA|MAISFRETE/i.test(textoLimpo);
 
-  let placaCavalo='';
-  let placaCarreta1='';
-  let placaCarreta2='';
-  let placaCarreta3='';
-  let motorista='';
-  let cpfMotorista='';
-  let cnh='';
-  let uf='';
-  let tipoBruto='';
-  let tipoVeiculo='';
-  let transportadora='';
+let placaCavalo='';
+let placaCarreta1='';
+let placaCarreta2='';
+let placaCarreta3='';
+let motorista='';
+let cpfMotorista='';
+let cnh='';
+let uf='';
+let tipoBruto='';
+let tipoVeiculo='';
+let transportadora='';
 
 if(ehMotz){
 
   transportadora='MOTZ TRANSPORTES LTDA';
 
   const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
-
   cpfMotorista=cpfMotzMatch ? cpfMotzMatch[0].replace(/\D/g,'') : '';
 
   if(cpfMotzMatch){
@@ -344,63 +344,104 @@ if(ehMotz){
   }
 
   const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
-
   uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
 
   cnh='';
   tipoBruto='RODOTREM 9 EIXO';
   tipoVeiculo='RODO-TREM 9 EIXO';
 
-  console.log('MOTZ DETECTADA AJUSTADA', {
-    motorista,
-    cpfMotorista,
-    placaCavalo,
-    placaCarreta1,
-    placaCarreta2,
-    placaCarreta3,
-    uf,
-    tipoVeiculo
-  });
+}
+
+else if(ehPampa){
+
+  transportadora='RHPAMPA TRANSPORTES LTDA';
+
+  placaCavalo=limparPlaca(
+    achar(/CAVALO:\s*([A-Z0-9\-]+)/i)
+  );
+
+  placaCarreta1=limparPlaca(
+    achar(/CARRETA\s*1:\s*([A-Z0-9\-]+)/i)
+  );
+
+  placaCarreta2=limparPlaca(
+    achar(/CARRETA\s*2:\s*([A-Z0-9\-]+)/i)
+  );
+
+  motorista=achar(
+    /MOTORISTA:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+  );
+
+  cpfMotorista=somenteNumero(
+    achar(/CPF:\s*([\d\.\/\-]+)/i)
+  );
+
+  cnh=somenteNumero(
+    achar(/N[°º]?\s*CNH\s*DOC\.?\s*:\s*(\d+)/i)
+  );
+
+  uf=achar(
+    /CAVALO:.*?\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s*\//i
+  ).toUpperCase();
+
+  const eixos=parseInt(
+    achar(/TOTAL\s*EIXOS:\s*(\d+)/i)
+  ) || 0;
+
+  if(eixos>=9){
+    tipoBruto='RODOTREM 9 EIXO';
+    tipoVeiculo='RODO-TREM 9 EIXO';
+  }
+  else if(eixos===7){
+    tipoBruto='BITREM 7 EIXO';
+    tipoVeiculo='BI-TREM 7 EIXO';
+  }
+  else{
+    tipoBruto='CARRETA LS';
+    tipoVeiculo='CARRETA LS 6 EIXO';
+  }
 
 }
 
-  else if(ehRodoviva){
-    transportadora='RODOVIVA TRANSPORTES LTDA';
+else if(ehRodoviva){
 
-    placaCavalo=limparPlaca(achar(
-      /Cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
-    ));
+  transportadora='RODOVIVA TRANSPORTES LTDA';
 
-    placaCarreta1=limparPlaca(achar(
-      /Carreta\s*1\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
-    ));
+  placaCavalo=limparPlaca(achar(
+    /Cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
+  ));
 
-    placaCarreta2=limparPlaca(achar(
-      /Carreta\s*2\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
-    ));
+  placaCarreta1=limparPlaca(achar(
+    /Carreta\s*1\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
+  ));
 
-    motorista=achar(
-      /Solicitamos\s+entregar\s+ao\s+motorista\s+Sr\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
-      /motorista\s+Sr\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
-    );
+  placaCarreta2=limparPlaca(achar(
+    /Carreta\s*2\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
+  ));
 
-    cpfMotorista=somenteNumero(achar(
-      /CPF\s*:\s*([\d\.\-\/]+)/i
-    ));
+  motorista=achar(
+    /Solicitamos\s+entregar\s+ao\s+motorista\s+Sr\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
+    /motorista\s+Sr\.?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+  );
 
-    cnh=somenteNumero(achar(
-      /CNH\s*:\s*(\d{5,15})/i
-    ));
+  cpfMotorista=somenteNumero(achar(
+    /CPF\s*:\s*([\d\.\-\/]+)/i
+  ));
 
-    uf=achar(
-      new RegExp('UF\\s*:\\s*('+ufs+')','i')
-    ).toUpperCase();
+  cnh=somenteNumero(achar(
+    /CNH\s*:\s*(\d{5,15})/i
+  ));
 
-    if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
-      tipoBruto='RODO TREM 9 EIXO';
-      tipoVeiculo='RODO-TREM 9 EIXO';
-    }
-  }
+  uf=achar(
+    new RegExp('UF\\s*:\\s*('+ufs+')','i')
+  ).toUpperCase();
+
+if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
+  tipoBruto='RODO TREM 9 EIXO';
+  tipoVeiculo='RODO-TREM 9 EIXO';
+}
+
+}
 
   else{
     transportadora=achar(

@@ -382,21 +382,6 @@ if(ehMotz){
 
   }
 
-  console.log('MOTZ DETECTADA', {
-    motorista,
-    cpfMotorista,
-    placaCavalo,
-    placaCarreta1,
-    placaCarreta2,
-    placaCarreta3,
-    uf,
-    tipoVeiculo
-  });
-
-}
-
-  cnh='';
-
   console.log('MOTZ DETECTADA CORRIGIDA', {
     motorista,
     cpfMotorista,

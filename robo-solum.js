@@ -367,7 +367,6 @@ if(ehMotz){
   });
 
 }
-  }
 
   else if(ehRodoviva){
     transportadora='RODOVIVA TRANSPORTES LTDA';

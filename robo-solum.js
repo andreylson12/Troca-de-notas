@@ -319,53 +319,45 @@ if(ehMotz){
 
   transportadora='MOTZ TRANSPORTES LTDA';
 
-  // Todas as placas encontradas
-  const placasMotz=[...textoLimpo.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
-    .map(x=>limparPlaca(x[0]))
-    .filter(Boolean);
+  const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
 
-  // MOTZ: primeira placa encontrada = cavalo
-  placaCavalo=placasMotz[0]||'';
-
-  // demais placas = carretas
-  placaCarreta1=placasMotz[1]||'';
-  placaCarreta2=placasMotz[2]||'';
-  placaCarreta3=placasMotz[3]||'';
-
-  // Motorista
-  const motzMotorista=textoLimpo.match(
-    /MOTORISTA\s*:\s*(.*?)\s+\d{3}\.\d{3}\.\d{3}\-\d{2}/i
-  );
-
-  motorista=motzMotorista
-    ? motzMotorista[1].trim()
+  cpfMotorista=cpfMotzMatch
+    ? cpfMotzMatch[0].replace(/\D/g,'')
     : '';
 
-  // UF
-  const ufMotz=textoLimpo.match(
+  if(cpfMotzMatch){
+    const antesCpf=textoLimpo.slice(0, cpfMotzMatch.index).trim();
+    const depoisCpf=textoLimpo.slice(cpfMotzMatch.index + cpfMotzMatch[0].length).trim();
+
+    const motzNome=antesCpf.match(/TRANSPORTES\s+LTDA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)$/i);
+
+    motorista=motzNome
+      ? motzNome[1].trim()
+      : '';
+
+    const placasDepoisCpf=[...depoisCpf.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
+      .map(x=>limparPlaca(x[0]));
+
+    placaCavalo=placasDepoisCpf[0]||'';
+    placaCarreta1=placasDepoisCpf[1]||'';
+    placaCarreta2=placasDepoisCpf[2]||'';
+    placaCarreta3=placasDepoisCpf[3]||'';
+  }
+
+  uf=achar(
     new RegExp('UF\\s*:?\\s*('+ufs+')','i')
-  );
+  ).toUpperCase();
 
-  uf=ufMotz
-    ? ufMotz[1].toUpperCase()
-    : '';
-
-  // Tipo veículo
-  if(
-    /RODOTREM/i.test(textoLimpo) ||
-    /RODO\s*TREM/i.test(textoLimpo)
-  ){
+  if(/RODOTREM/i.test(textoLimpo) || /RODO\s*TREM/i.test(textoLimpo)){
     tipoBruto='RODOTREM 9 EIXO';
     tipoVeiculo='RODO-TREM 9 EIXO';
   }
 
-  // Não usamos CPF/CNH na MOTZ
-  cpfMotorista='';
   cnh='';
 
-  console.log('MOTZ DETECTADA');
-  console.log({
+  console.log('MOTZ DETECTADA CORRIGIDA', {
     motorista,
+    cpfMotorista,
     placaCavalo,
     placaCarreta1,
     placaCarreta2,
@@ -375,7 +367,6 @@ if(ehMotz){
   });
 
 }
-
   }
 
   else if(ehRodoviva){

@@ -612,7 +612,6 @@ function buscarRemessa(){
   console.log('REMESSA ENCONTRADA:',linha);
   return linha;
 }
-
 async function selecionarEnderecoRemessaPorBP(remessa){
   const codigoRemessa = String(remessa.bpRemessa || remessa.endRemessa || '').replace(/\D/g,'');
 
@@ -621,10 +620,7 @@ async function selecionarEnderecoRemessaPorBP(remessa){
     return false;
   }
 
-  const campoPrincipal =
-    document.querySelector('#enderecoRemessa') ||
-    document.querySelector('input[formcontrolname="enderecoRemessa"]') ||
-    document.querySelector('input[placeholder*="Remessa"]');
+  const campoPrincipal = document.querySelector('#enderecoRemessa');
 
   if(!campoPrincipal){
     alert('Não achei o campo principal Endereço de Remessa.');
@@ -643,22 +639,10 @@ async function selecionarEnderecoRemessaPorBP(remessa){
   lupa.click();
   await esperar(1500);
 
-  const painel = [...document.querySelectorAll('div, aside, section')]
-    .filter(e => e.offsetParent !== null)
-    .find(e =>
-      normalizar(e.innerText || '').includes('BUSCAR ENDERECO DE REMESSA')
-    );
-
-  if(!painel){
-    alert('Não achei a janela Buscar Endereço de Remessa.');
-    return false;
-  }
-
-  const campoBusca = [...painel.querySelectorAll('input')]
-    .find(i => !i.disabled && i.offsetParent !== null);
+  const campoBusca = document.querySelector('#filtroBusca');
 
   if(!campoBusca){
-    alert('Achei a janela, mas não achei o campo de busca dela.');
+    alert('Não achei o campo filtroBusca da janela.');
     return false;
   }
 
@@ -666,30 +650,28 @@ async function selecionarEnderecoRemessaPorBP(remessa){
   await esperar(300);
 
   setInputCampo(campoBusca,codigoRemessa);
-  await esperar(500);
+  await esperar(800);
 
-  campoBusca.dispatchEvent(new KeyboardEvent('keyup',{bubbles:true,key:' '}));
-  campoBusca.value = codigoRemessa + ' ';
-  campoBusca.dispatchEvent(new Event('input',{bubbles:true}));
+  campoBusca.dispatchEvent(new KeyboardEvent('keyup',{bubbles:true,key:'Enter',code:'Enter'}));
+  campoBusca.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,key:'Enter',code:'Enter'}));
+  campoBusca.dispatchEvent(new Event('change',{bubbles:true}));
 
   await esperar(2500);
 
-  let btnSelecionar = [...painel.querySelectorAll('button')]
+  const btnSelecionar = [...document.querySelectorAll('button')]
     .find(b =>
       b.offsetParent !== null &&
       normalizar(b.innerText || '').includes('SELECIONAR')
     );
 
   if(!btnSelecionar){
-    alert('Achei a janela, mas não achei o botão Selecionar do BP '+codigoRemessa+'.');
+    alert('Não achei o botão Selecionar depois de buscar BP '+codigoRemessa+'.');
     return false;
   }
 
-  btnSelecionar.scrollIntoView({block:'center'});
-  await esperar(300);
   btnSelecionar.click();
-
   await esperar(1200);
+
   return true;
 }
 

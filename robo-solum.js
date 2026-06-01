@@ -328,61 +328,47 @@ if(ehMotz){
   if(cpfMotzMatch){
 
     const antesCpf=textoLimpo.slice(0, cpfMotzMatch.index).trim();
-    const depoisCpf=textoLimpo.slice(
-      cpfMotzMatch.index + cpfMotzMatch[0].length
-    ).trim();
+    const depoisCpf=textoLimpo.slice(cpfMotzMatch.index + cpfMotzMatch[0].length).trim();
 
     const motzNome=antesCpf.match(
       /TRANSPORTES\s+LTDA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)$/i
     );
 
-    motorista=motzNome
-      ? motzNome[1].trim()
-      : '';
+    motorista=motzNome ? motzNome[1].trim() : '';
 
-    const placasDepoisCpf=[
-      ...depoisCpf.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)
-    ].map(x=>limparPlaca(x[0]));
+    const fimTrecho=depoisCpf.search(/GRANEL|PEDIDO|SOJA|EMITENTE|DATA|CNH|VOLUME/i);
 
-    placaCavalo=placasDepoisCpf[0]||'';
-    placaCarreta1=placasDepoisCpf[1]||'';
-    placaCarreta2=placasDepoisCpf[2]||'';
-    placaCarreta3=placasDepoisCpf[3]||'';
+    const trechoPlacas=fimTrecho>=0
+      ? depoisCpf.slice(0,fimTrecho)
+      : depoisCpf;
+
+    const placasMotz=[...trechoPlacas.matchAll(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/g)]
+      .map(x=>limparPlaca(x[0]))
+      .filter(Boolean);
+
+    placaCavalo=placasMotz[0]||'';
+    placaCarreta1=placasMotz[1]||'';
+    placaCarreta2=placasMotz[2]||'';
+    placaCarreta3=placasMotz[3]||'';
   }
 
-  // UF
-  const ufMotz=textoLimpo.match(
-    new RegExp('UF\\s*:?\\s*('+ufs+')','i')
-  );
+  const ufMotz=textoLimpo.match(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
 
   uf=ufMotz
     ? ufMotz[1].toUpperCase()
     : '';
 
-  // CNH não está vindo nesse layout
+  if(!uf){
+    const ufSolta=textoLimpo.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+    uf=ufSolta ? ufSolta[1].toUpperCase() : '';
+  }
+
   cnh='';
 
-  // Tipo pela quantidade de implementos
-  if(placaCarreta3){
+  tipoBruto='RODOTREM 9 EIXO';
+  tipoVeiculo='RODO-TREM 9 EIXO';
 
-    tipoBruto='RODOTREM 9 EIXO';
-    tipoVeiculo='RODO-TREM 9 EIXO';
-
-  }
-  else if(placaCarreta2){
-
-    tipoBruto='BI-TREM 7 EIXO';
-    tipoVeiculo='BI-TREM 7 EIXO';
-
-  }
-  else if(placaCarreta1){
-
-    tipoBruto='CARRETA LS';
-    tipoVeiculo='CARRETA LS 6 EIXO';
-
-  }
-
-  console.log('MOTZ DETECTADA CORRIGIDA', {
+  console.log('MOTZ DETECTADA AJUSTADA', {
     motorista,
     cpfMotorista,
     placaCavalo,

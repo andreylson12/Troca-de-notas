@@ -267,8 +267,7 @@ async function lerOrdem(file=null){
   let texto=await textoPDF(file);
   if(!texto || texto.length<80) texto=await ocrArquivo(file);
 
-  const textoOriginal=String(texto||'');
-  const textoLimpo=textoOriginal.replace(/\s+/g,' ').trim();
+  const textoLimpo=String(texto||'').replace(/\s+/g,' ').trim();
 
   function achar(...regexes){
     for(const rx of regexes){
@@ -297,27 +296,62 @@ async function lerOrdem(file=null){
     .map(m=>limparPlaca(m[0]))
     .filter(p=>p.length===7);
 
-  let transportadora=achar(
-    /(RODOVIVA\s+TRANSPORTES\s+LTDA\.?)/i,
-    /(TRANSPORTES\s+FOB\s+LTDA)/i,
-    /(FRIBOM[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
-    /(MOTZ[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
-    /Embarcador\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s\.]+?)\s+CNPJ/i
-  );
+  const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
+  const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
 
   let placaCavalo='';
   let placaCarreta1='';
   let placaCarreta2='';
+  let placaCarreta3='';
   let motorista='';
   let cpfMotorista='';
   let cnh='';
   let uf='';
   let tipoBruto='';
   let tipoVeiculo='';
+  let transportadora='';
 
-  const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
+  if(ehMotz){
+    transportadora='MOTZ TRANSPORTES LTDA';
 
-  if(ehRodoviva){
+    placaCavalo=limparPlaca(achar(
+      /PLACA\s*CAVALO\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
+    ));
+
+    const carretas=[...textoLimpo.matchAll(/PLACA\s*CARRETA\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/gi)]
+      .map(m=>limparPlaca(m[1]))
+      .filter(Boolean);
+
+    placaCarreta1=carretas[0]||'';
+    placaCarreta2=carretas[1]||'';
+    placaCarreta3=carretas[2]||'';
+
+    motorista=achar(
+      /MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
+      /MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CNH/i
+    );
+
+    cpfMotorista=somenteNumero(achar(
+      /CPF\s*:\s*([\d\.\-\/]+)/i
+    ));
+
+    cnh=somenteNumero(achar(
+      /CNH\s*:\s*(\d{5,15})/i
+    ));
+
+    uf=achar(
+      new RegExp('UF\\s*:?\\s*('+ufs+')','i')
+    ).toUpperCase();
+
+    if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
+      tipoBruto='RODOTREM 9 EIXO';
+      tipoVeiculo='RODO-TREM 9 EIXO';
+    }
+  }
+
+  else if(ehRodoviva){
+    transportadora='RODOVIVA TRANSPORTES LTDA';
+
     placaCavalo=limparPlaca(achar(
       /Cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
     ));
@@ -340,20 +374,27 @@ async function lerOrdem(file=null){
     ));
 
     cnh=somenteNumero(achar(
-      /CNH\s*:\s*(\d+)/i
+      /CNH\s*:\s*(\d{5,15})/i
     ));
 
     uf=achar(
       new RegExp('UF\\s*:\\s*('+ufs+')','i')
     ).toUpperCase();
 
-    if(/RODO\s*TREM\s*9/i.test(textoLimpo) || /RODOTREM\s*9/i.test(textoLimpo)){
+    if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
       tipoBruto='RODO TREM 9 EIXO';
       tipoVeiculo='RODO-TREM 9 EIXO';
     }
   }
 
-  if(!ehRodoviva){
+  else{
+    transportadora=achar(
+      /(TRANSPORTES\s+FOB\s+LTDA)/i,
+      /(FRIBOM[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
+      /(MOTZ[^\s]*\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\.]*)/i,
+      /Embarcador\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s\.]+?)\s+CNPJ/i
+    );
+
     placaCavalo=limparPlaca(achar(
       /Placa\s*cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i,
       /Cavalo\s*:\s*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i
@@ -433,7 +474,7 @@ async function lerOrdem(file=null){
     .trim();
 
   if(!tipoVeiculo){
-    if(/RODO\s*TREM\s*9/i.test(textoLimpo) || /RODOTREM\s*9/i.test(textoLimpo)){
+    if(/RODO\s*TREM\s*9|RODOTREM\s*9/i.test(textoLimpo)){
       tipoVeiculo='RODO-TREM 9 EIXO';
       tipoBruto='RODO TREM 9 EIXO';
     }
@@ -457,6 +498,7 @@ async function lerOrdem(file=null){
     placaCarreta:placaCarreta1,
     placaCarreta1,
     placaCarreta2,
+    placaCarreta3,
     uf,
     ufNome:nomeUF(uf),
     motorista,
@@ -473,9 +515,11 @@ async function lerOrdem(file=null){
 
   alert(
     'Ordem carregada:\n\n'+
+    'Transportadora: '+(ROBO.ordem.transportadora||'NÃO ACHOU')+'\n'+
     'Placa cavalo: '+(ROBO.ordem.placaCavalo||'NÃO ACHOU')+'\n'+
     'Carreta 1: '+(ROBO.ordem.placaCarreta1||'NÃO ACHOU')+'\n'+
     'Carreta 2: '+(ROBO.ordem.placaCarreta2||'NÃO ACHOU')+'\n'+
+    'Carreta 3: '+(ROBO.ordem.placaCarreta3||'')+'\n'+
     'UF: '+(ROBO.ordem.uf||'NÃO ACHOU')+' '+(ROBO.ordem.ufNome||'')+'\n'+
     'Motorista: '+(ROBO.ordem.motorista||'NÃO ACHOU')+'\n'+
     'CPF: '+(ROBO.ordem.cpfMotorista||'NÃO ACHOU')+'\n'+

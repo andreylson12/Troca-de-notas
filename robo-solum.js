@@ -942,7 +942,14 @@ async function lerLaudoClassificacao(file=null){
 
   alert('Lendo laudo... aguarde.');
 
-  const texto=await ocrArquivo(file);
+let texto=await textoPDF(file);
+
+console.log('TEXTO PDF:', texto);
+
+if(!texto || texto.length<200){
+  console.log('PDF sem texto. Usando OCR...');
+  texto=await ocrArquivo(file);
+}
 
   console.log('OCR LAUDO:',texto);
 

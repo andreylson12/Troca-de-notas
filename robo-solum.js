@@ -1214,6 +1214,26 @@ async function lerPesagemOCR(file=null){
 
   alert('Pesagem preenchida. Confira antes de salvar.');
 }
+async function continuarDepoisTicket(){
+  if(confirm('Abrir/preencher NF agora?')){
+    await preencherNF();
+  }
+
+  alert('Confira e SALVE A NF manualmente.\nDepois clique OK.');
+
+  if(confirm('Preencher CLASSIFICAÇÃO agora?')){
+    await lerLaudoClassificacao(ROBO.arquivos.laudo);
+  }
+
+  alert('Confira e salve a classificação manualmente.\nDepois clique OK.');
+
+  if(confirm('Preencher PESAGEM agora?')){
+    await lerPesagemOCR(ROBO.arquivos.pesagem);
+  }
+
+  alert('CONTINUAÇÃO FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
+}
+
 async function executarGuiado(){
   if(!ROBO.arquivos.xml || !ROBO.arquivos.planilha || !ROBO.arquivos.ordem || !ROBO.arquivos.laudo || !ROBO.arquivos.pesagem){
     return alert('Primeiro clique em CARREGAR PACOTE e selecione os 5 arquivos.');
@@ -1232,28 +1252,12 @@ async function executarGuiado(){
       alert('Primeira tela preenchida. Gere o ticket manualmente.');
       return;
     }
+
+    alert('Ticket gerado. Quando a próxima tela abrir, clique em CONTINUAR.');
+    return;
   }
-
-  if(confirm('Abrir/preencher NF agora?')){
-    await preencherNF();
-  }
-
-  alert('Confira e SALVE A NF manualmente.\nDepois clique OK.');
-
-  if(confirm('Preencher CLASSIFICAÇÃO agora?')){
-    await lerLaudoClassificacao(ROBO.arquivos.laudo);
-  }
-
-  alert('Confira e salve a classificação manualmente.\nDepois clique OK.');
-
-  if(confirm('Preencher PESAGEM agora?')){
-    await lerPesagemOCR(ROBO.arquivos.pesagem);
-  }
-
-  alert('EXECUÇÃO GUIADA FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
 }
-
-
+ 
 function criarPainelRobo(){
   const box=document.createElement('div');
   box.style=`
@@ -1297,6 +1301,7 @@ function criarPainelRobo(){
 
   btn('📦 Carregar Pacote','#9333ea',carregarPacote);
   btn('▶ Executar Guiado','#111827',executarGuiado);
+  btn('⏭ Continuar','#2563eb',continuarDepoisTicket);
 
   const detalhes=document.createElement('details');
   detalhes.style='margin-top:6px;';

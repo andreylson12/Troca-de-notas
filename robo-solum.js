@@ -140,8 +140,9 @@ async function textoPDF(file){
   }catch(e){
     return '';
   }
-  }
-  async function ocrArquivo(file){
+}
+
+async function ocrArquivo(file){
   const canvas=await arquivoParaCanvas(file);
 
   const c=document.createElement('canvas');

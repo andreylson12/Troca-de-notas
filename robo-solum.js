@@ -1136,6 +1136,36 @@ function extrairPesos(texto){
   const texto=proc?proc.options[proc.selectedIndex].text:'';
   return texto.toUpperCase().includes('ENTRADA');
 }
+async function clicarGerarTicket(){
+  await esperar(1200);
+
+  const btnGerar=[...document.querySelectorAll('button')]
+    .find(b =>
+      b.offsetParent!==null &&
+      normalizar(b.innerText).includes('GERAR TICKET')
+    );
+
+  if(!btnGerar){
+    alert('Não achei o botão Gerar Ticket.');
+    return false;
+  }
+
+  if(btnGerar.disabled){
+    alert('Botão Gerar Ticket ainda está desabilitado.');
+    return false;
+  }
+
+  btnGerar.click();
+
+  await esperar(3000);
+
+  return true;
+}
+
+async function executarGuiado(){
+   ...
+}
+  
 
 async function lerPesagemOCR(file=null){
   file=file||ROBO.arquivos.pesagem||await escolherArquivo('.pdf,image/*');
@@ -1189,23 +1219,27 @@ async function lerPesagemOCR(file=null){
 
   alert('Pesagem preenchida. Confira antes de salvar.');
 }
-
-async function executarGuiado(){
+  async function executarGuiado(){
   if(!ROBO.arquivos.xml || !ROBO.arquivos.planilha || !ROBO.arquivos.ordem || !ROBO.arquivos.laudo || !ROBO.arquivos.pesagem){
-    return alert('Primeiro clique em 9 - CARREGAR PACOTE e selecione os 5 arquivos.');
+    return alert('Primeiro clique em CARREGAR PACOTE e selecione os 5 arquivos.');
   }
 
   await lerXML(ROBO.arquivos.xml);
   await lerPlanilha(ROBO.arquivos.planilha);
   await lerOrdem(ROBO.arquivos.ordem);
 
-  if(confirm('Preencher PRIMEIRA TELA agora?')){
+  if(confirm('Preencher PRIMEIRA TELA e gerar ticket agora?')){
     await preencherPrimeiraTela();
+
+    const gerouTicket=await clicarGerarTicket();
+
+    if(!gerouTicket){
+      alert('Primeira tela preenchida. Gere o ticket manualmente.');
+      return;
+    }
   }
 
-  alert('Confira a primeira tela e clique em GERAR TICKET manualmente.\nDepois clique OK.');
-
-  if(confirm('Já gerou o ticket? Abrir/preencher NF agora?')){
+  if(confirm('Abrir/preencher NF agora?')){
     await preencherNF();
   }
 
@@ -1217,6 +1251,12 @@ async function executarGuiado(){
 
   alert('Confira e salve a classificação manualmente.\nDepois clique OK.');
 
+  if(confirm('Preencher PESAGEM agora?')){
+    await lerPesagemOCR(ROBO.arquivos.pesagem);
+  }
+
+  alert('EXECUÇÃO GUIADA FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
+}
   if(confirm('Preencher PESAGEM agora?')){
     await lerPesagemOCR(ROBO.arquivos.pesagem);
   }

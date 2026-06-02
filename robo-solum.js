@@ -142,37 +142,57 @@ async function textoPDF(file){
   }
   }
 
-async function ocrArquivo(file){
-  const canvas=await arquivoParaCanvas(file);
+async function ocrPesagemFatal(file){
+  const canvasOriginal=await arquivoParaCanvas(file);
 
-  const c=document.createElement('canvas');
-  const ctx=c.getContext('2d');
+  function girarCanvas(canvas,graus){
+    const c=document.createElement('canvas');
+    const ctx=c.getContext('2d');
 
-  c.width=canvas.width;
-  c.height=canvas.height;
+    if(graus===90 || graus===270){
+      c.width=canvas.height;
+      c.height=canvas.width;
+    }else{
+      c.width=canvas.width;
+      c.height=canvas.height;
+    }
 
-  ctx.drawImage(canvas,0,0);
+    ctx.translate(c.width/2,c.height/2);
+    ctx.rotate(graus*Math.PI/180);
+    ctx.drawImage(canvas,-canvas.width/2,-canvas.height/2);
 
-  const img=ctx.getImageData(0,0,c.width,c.height);
-  const d=img.data;
-
-  for(let i=0;i<d.length;i+=4){
-    const media=(d[i]+d[i+1]+d[i+2])/3;
-    const v=media>160?255:0;
-
-    d[i]=v;
-    d[i+1]=v;
-    d[i+2]=v;
+    return c;
   }
 
-  ctx.putImageData(img,0,0);
+  async function lerCanvas(canvas){
+    const result=await Tesseract.recognize(canvas,'por');
+    return result.data.text||'';
+  }
 
-  const result=await Tesseract.recognize(c,'por');
+  const tentativas=[
+    await lerCanvas(canvasOriginal),
+    await lerCanvas(girarCanvas(canvasOriginal,90)),
+    await lerCanvas(girarCanvas(canvasOriginal,180)),
+    await lerCanvas(girarCanvas(canvasOriginal,270))
+  ];
 
-  console.log('OCR RESULTADO:');
-  console.log(result.data.text);
+  const melhor=tentativas
+    .map(t=>({
+      texto:t,
+      pontos:
+        (normalizar(t).includes('PESO')?5:0)+
+        (normalizar(t).includes('INICIAL')?5:0)+
+        (normalizar(t).includes('FINAL')?5:0)+
+        (normalizar(t).includes('LIQUIDO')?5:0)+
+        ((t.match(/\d{4,6}/g)||[]).length)
+    }))
+    .sort((a,b)=>b.pontos-a.pontos)[0];
 
-  return result.data.text;
+  console.log('OCR PESAGEM FATAL:');
+  console.log(melhor.texto);
+
+  return melhor.texto;
+
 }
 
 async function carregarPacote(){

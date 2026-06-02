@@ -173,7 +173,6 @@ async function ocrArquivo(file){
 
   return result.data.text;
 }
-}
 
 async function carregarPacote(){
   const files=await escolherPacote();

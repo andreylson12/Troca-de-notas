@@ -1162,11 +1162,6 @@ async function clicarGerarTicket(){
   return true;
 }
 
-async function executarGuiado(){
-   ...
-}
-  
-
 async function lerPesagemOCR(file=null){
   file=file||ROBO.arquivos.pesagem||await escolherArquivo('.pdf,image/*');
 

@@ -960,13 +960,15 @@ async function lerLaudoClassificacao(file=null){
 function extrairPesos(texto){
   console.log('OCR PESAGEM:',texto);
 
+  const raw=String(texto||'');
+
   function num(v){
     return parseInt(String(v||'').replace(/\D/g,''),10)||0;
   }
 
-  function acharPeso(...regexes){
+  function achar(...regexes){
     for(const rx of regexes){
-      const m=String(texto||'').match(rx);
+      const m=raw.match(rx);
       if(m && m[1]){
         const n=num(m[1]);
         if(n>=1000 && n<=100000) return n;
@@ -975,78 +977,120 @@ function extrairPesos(texto){
     return 0;
   }
 
-  const pesoInicial=acharPeso(
-    /PESO\s+INICIAL\s*[:=]?\s*(\d{4,6})/i,
-    /PESO\s+INICIAL.*?(\d{4,6})/i,
-    /INICIAL\s*[:=]?\s*(\d{4,6})/i
+  // REGRA 1: PESO INICIAL / PESO FINAL / PESO LIQUIDO
+  let inicial=achar(
+    /PESO\s+INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
+    /INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
   );
 
-  const pesoFinal=acharPeso(
-    /PESO\s+FINAL\s*[:=]?\s*(\d{4,6})/i,
-    /PESO\s+FINAL.*?(\d{4,6})/i,
-    /FINAL\s*[:=]?\s*(\d{4,6})/i
+  let final=achar(
+    /PESO\s+FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
+    /FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
   );
 
-  const pesoLiquido=acharPeso(
-    /PESO\s+LIQUIDO\s*[:=]?\s*(\d{4,6})/i,
-    /PESO\s+L[IÍ]QUIDO.*?(\d{4,6})/i,
-    /LIQUIDO\s*[:=]?\s*(\d{4,6})/i,
-    /L[IÍ]QUIDO\s*[:=]?\s*(\d{4,6})/i
+  let liquido=achar(
+    /PESO\s+L[IÍE]QUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
+    /LIQUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
+    /L[IÍ]QUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
   );
 
-  if(pesoInicial && pesoFinal){
-    const menor=Math.min(pesoInicial,pesoFinal);
-    const maior=Math.max(pesoInicial,pesoFinal);
-    const calc=maior-menor;
+  if(inicial && final && inicial>=10000 && final>=10000){
+    const tara=Math.min(inicial,final);
+    const bruto=Math.max(inicial,final);
+    const calc=bruto-tara;
 
-    if(!pesoLiquido || Math.abs(calc-pesoLiquido)<=80){
+    if(!liquido || Math.abs(calc-liquido)<=100){
       return {
-        tara:String(menor),
-        bruto:String(maior),
-        liquido:String(pesoLiquido||calc),
-        metodo:'PESO INICIAL / FINAL / LIQUIDO'
+        tara:String(tara),
+        bruto:String(bruto),
+        liquido:String(liquido||calc),
+        metodo:'REGRA 1 - INICIAL/FINAL'
       };
     }
   }
 
-  const candidatos=[...String(texto||'').matchAll(/\b\d{2}[.,]?\d{3}\b/g)]
+  // REGRA 2: PESO BRUTO / PESO TARA / LIQUIDO
+  let bruto=achar(
+    /PESO\s+BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
+    /BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  );
+
+  let tara=achar(
+    /PESO\s+TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
+    /TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  );
+
+  liquido=achar(
+    /LIQUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
+    /L[IÍ]QUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
+    /SALDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  );
+
+  if(bruto && tara){
+    const calc=bruto-tara;
+
+    if(!liquido || Math.abs(calc-liquido)<=150){
+      return {
+        tara:String(tara),
+        bruto:String(bruto),
+        liquido:String(liquido||calc),
+        metodo:'REGRA 2 - BRUTO/TARA'
+      };
+    }
+  }
+
+  // REGRA 3: números soltos com validação bruto - tara = líquido
+  const valores=[...raw.matchAll(/\b\d{2,3}[.,]\d{3}\b|\b\d{5}\b/g)]
     .map(m=>num(m[0]))
-    .filter(v=>v>=10000&&v<=90000);
+    .filter(v=>v>=10000 && v<=90000);
 
-  const valores=[...new Set(candidatos)].sort((a,b)=>a-b);
+  const unicos=[...new Set(valores)].sort((a,b)=>a-b);
 
-  for(const bruto of valores.slice().reverse()){
-    for(const tara of valores){
-      if(bruto<=tara) continue;
-      const liquido=bruto-tara;
+  console.log('PESOS CANDIDATOS:',unicos);
 
-      if(valores.includes(liquido)){
-        return {
-          tara:String(tara),
-          bruto:String(bruto),
-          liquido:String(liquido),
-          metodo:'3 pesos validados'
-        };
+  for(const b of unicos.slice().reverse()){
+    for(const t of unicos){
+      if(b<=t) continue;
+
+      const calc=b-t;
+
+      for(const l of unicos){
+        if(Math.abs(calc-l)<=150){
+          return {
+            tara:String(t),
+            bruto:String(b),
+            liquido:String(l),
+            metodo:'REGRA 3 - VALIDACAO MATEMATICA'
+          };
+        }
       }
     }
   }
 
-  if(valores.length>=2){
+  // REGRA 4: fallback maior e menor
+  if(unicos.length>=2){
+    const t=unicos[0];
+    const b=unicos[unicos.length-1];
+
     return {
-      tara:String(valores[0]),
-      bruto:String(valores[valores.length-1]),
-      liquido:String(valores[valores.length-1]-valores[0]),
-      metodo:'menor/maior'
+      tara:String(t),
+      bruto:String(b),
+      liquido:String(b-t),
+      metodo:'REGRA 4 - MAIOR/MENOR'
     };
   }
+
+  alert('Não consegui validar a pesagem automaticamente. Vou pedir manual.');
 
   return {
     tara:prompt('Digite a tara / menor peso:', ''),
     bruto:prompt('Digite o peso bruto / maior peso:', ''),
     liquido:'',
-    metodo:'manual'
+    metodo:'MANUAL'
   };
-}
+
+  }
+
   function processoEntrada(){
   const proc=document.querySelector('#processo');
   const texto=proc?proc.options[proc.selectedIndex].text:'';
@@ -1060,9 +1104,10 @@ async function lerPesagemOCR(file=null){
 
   let texto=await textoPDF(file);
 
-if(!texto || texto.length<80){
-  texto=await ocrPesagemFatal(file);
-}
+  if(!texto || texto.length<80){
+    texto=await ocrPesagemFatal(file);
+  }
+
   const pesos=extrairPesos(texto);
 
   alert(

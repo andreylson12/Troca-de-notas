@@ -1224,16 +1224,87 @@ async function executarGuiado(){
   alert('EXECUÇÃO GUIADA FINALIZADA.\nConfira tudo antes de salvar/finalizar.');
 }
 
-criarBotao('1 - XML',120,'#065f46').onclick=()=>lerXML();
-criarBotao('2 - PLANILHA',170,'#7c3aed').onclick=()=>lerPlanilha();
-criarBotao('3 - ORDEM',220,'#ca8a04').onclick=()=>lerOrdem();
-criarBotao('4 - PREENCHER 1ª TELA',270,'#1d4ed8').onclick=preencherPrimeiraTela;
-criarBotao('5 - ABRIR/PREENCHER NF',320,'#0f766e').onclick=preencherNF;
-criarBotao('6 - LAUDO / CLASSIFICAÇÃO',370,'#b91c1c').onclick=()=>lerLaudoClassificacao();
-criarBotao('7 - PESAGEM OCR',420,'#0ea5e9').onclick=()=>lerPesagemOCR();
-criarBotao('8 - EXECUTAR GUIADO',470,'#111827').onclick=executarGuiado;
-criarBotao('9 - CARREGAR PACOTE',520,'#9333ea').onclick=carregarPacote;
+function criarPainelRobo(){
+  const box=document.createElement('div');
+  box.style=`
+    position:fixed;
+    top:100px;
+    right:20px;
+    z-index:999999;
+    background:white;
+    border:1px solid #ccc;
+    border-radius:10px;
+    padding:10px;
+    width:170px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    font-family:Arial;
+  `;
 
-alert('ROBÔ SOLUM V2 CORRIGIDO - ORDEM FOB / PLACA CAVALO CARREGADO.');
+  box.innerHTML=`
+    <div style="font-weight:bold;margin-bottom:8px;text-align:center;color:#064e3b">
+      🤖 ROBÔ SOLUM
+    </div>
+  `;
 
-})();
+  function btn(txt,cor,fn){
+    const b=document.createElement('button');
+    b.innerText=txt;
+    b.style=`
+      width:100%;
+      margin:4px 0;
+      padding:8px;
+      border:0;
+      border-radius:6px;
+      background:${cor};
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      font-size:12px;
+    `;
+    b.onclick=fn;
+    box.appendChild(b);
+  }
+
+  btn('📦 Carregar Pacote','#9333ea',carregarPacote);
+  btn('▶ Executar Guiado','#111827',executarGuiado);
+
+  const detalhes=document.createElement('details');
+  detalhes.style='margin-top:6px;';
+  detalhes.innerHTML='<summary style="cursor:pointer;font-weight:bold;">Etapas</summary>';
+
+  const area=document.createElement('div');
+  detalhes.appendChild(area);
+  box.appendChild(detalhes);
+
+  function btnEtapa(txt,cor,fn){
+    const b=document.createElement('button');
+    b.innerText=txt;
+    b.style=`
+      width:100%;
+      margin:3px 0;
+      padding:7px;
+      border:0;
+      border-radius:6px;
+      background:${cor};
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      font-size:11px;
+    `;
+    b.onclick=fn;
+    area.appendChild(b);
+  }
+
+  btnEtapa('1 - XML','#065f46',()=>lerXML());
+  btnEtapa('2 - PLANILHA','#7c3aed',()=>lerPlanilha());
+  btnEtapa('3 - ORDEM','#ca8a04',()=>lerOrdem());
+  btnEtapa('4 - 1ª TELA','#1d4ed8',preencherPrimeiraTela);
+  btnEtapa('5 - NF','#0f766e',preencherNF);
+  btnEtapa('6 - LAUDO','#b91c1c',()=>lerLaudoClassificacao());
+  btnEtapa('7 - PESAGEM','#0ea5e9',()=>lerPesagemOCR());
+
+  document.body.appendChild(box);
+}
+criarPainelRobo();
+
+alert('ROBÔ SOLUM V2 CORRIGIDO - PAINEL COMPACTO CARREGADO.');

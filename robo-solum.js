@@ -402,7 +402,8 @@ if(ehMotz){
   }else{
     tipoVeiculo='CARRETA LS 6 EIXO';
   }
-
+    
+  }
 else if(ehPampa){
 
   transportadora='RHPAMPA TRANSPORTES LTDA';

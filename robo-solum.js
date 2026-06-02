@@ -144,8 +144,36 @@ async function textoPDF(file){
 
 async function ocrArquivo(file){
   const canvas=await arquivoParaCanvas(file);
-  const result=await Tesseract.recognize(canvas,'por');
+
+  const c=document.createElement('canvas');
+  const ctx=c.getContext('2d');
+
+  c.width=canvas.width;
+  c.height=canvas.height;
+
+  ctx.drawImage(canvas,0,0);
+
+  const img=ctx.getImageData(0,0,c.width,c.height);
+  const d=img.data;
+
+  for(let i=0;i<d.length;i+=4){
+    const media=(d[i]+d[i+1]+d[i+2])/3;
+    const v=media>160?255:0;
+
+    d[i]=v;
+    d[i+1]=v;
+    d[i+2]=v;
+  }
+
+  ctx.putImageData(img,0,0);
+
+  const result=await Tesseract.recognize(c,'por');
+
+  console.log('OCR RESULTADO:');
+  console.log(result.data.text);
+
   return result.data.text;
+}
 }
 
 async function carregarPacote(){

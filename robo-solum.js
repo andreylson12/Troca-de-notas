@@ -1155,11 +1155,11 @@ async function clicarGerarTicket(){
     return false;
   }
 
-  btnGerar.click();
+btnGerar.click();
 
-  await esperar(3000);
+console.log('Ticket gerado. Aguardando carregar...');
 
-  return true;
+await esperar(8000);
 }
 
 async function lerPesagemOCR(file=null){

@@ -1058,7 +1058,11 @@ async function lerPesagemOCR(file=null){
 
   alert('Lendo pesagem... aguarde.');
 
-  const texto=await ocrArquivo(file);
+  let texto=await textoPDF(file);
+
+if(!texto || texto.length<80){
+  texto=await ocrPesagemFatal(file);
+}
   const pesos=extrairPesos(texto);
 
   alert(

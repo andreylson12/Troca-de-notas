@@ -141,6 +141,23 @@ async function textoPDF(file){
     return '';
   }
   }
+  async function ocrArquivo(file){
+  const canvas=await arquivoParaCanvas(file);
+
+  const c=document.createElement('canvas');
+  const ctx=c.getContext('2d');
+
+  c.width=canvas.width;
+  c.height=canvas.height;
+  ctx.drawImage(canvas,0,0);
+
+  const result=await Tesseract.recognize(c,'por');
+
+  console.log('OCR RESULTADO:');
+  console.log(result.data.text);
+
+  return result.data.text;
+}
 
 async function ocrPesagemFatal(file){
   const canvasOriginal=await arquivoParaCanvas(file);

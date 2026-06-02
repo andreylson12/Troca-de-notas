@@ -303,6 +303,7 @@ console.log("=================================");
  const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
 const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
 const ehPampa=/RHPAMPA|PAMPA|MAISFRETE/i.test(textoLimpo);
+const ehMafro=/MAFRO/i.test(textoLimpo);
 
 let placaCavalo='';
 let placaCarreta1='';
@@ -351,6 +352,56 @@ if(ehMotz){
   tipoVeiculo='RODO-TREM 9 EIXO';
 
 }
+
+  else if(ehMafro){
+
+  transportadora='MAFRO TRANSPORTES LTDA';
+
+  motorista=achar(
+    /Motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+  );
+
+  cpfMotorista=somenteNumero(
+    achar(/CPF\s*[:.\s]*([\d\.\/\-]+)/i)
+  );
+
+  cnh=somenteNumero(
+    achar(/CNH\s*[:.\s]*(\d{5,15})/i)
+  );
+
+  placaCavalo=limparPlaca(
+    achar(/Placa\s*\(cavalo\)\s*[:.\s]*([A-Z0-9\-]+)/i)
+  );
+
+  const carretasTxt=achar(
+    /Placa\(s\)\s*Carreta\(s\)\s*[:.\s]*([A-Z0-9\-\s]+)/i
+  );
+
+  const carretas=[...carretasTxt.matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
+    .map(x=>limparPlaca(x[0]));
+
+  placaCarreta1=carretas[0]||'';
+  placaCarreta2=carretas[1]||'';
+  placaCarreta3=carretas[2]||'';
+
+  uf=achar(
+    /Placa\s*\(cavalo\).*?UF\s*[:.\s]*([A-Z]{2})/i,
+    new RegExp('UF\\s*[:.\\s]*('+ufs+')','i')
+  ).toUpperCase();
+
+  tipoBruto=achar(
+    /Tipo\s+de\s+Caminh[oõ]es\s*[:.\s]*([A-Z0-9ÁÉÍÓÚÂÊÔÃÕÇ\s\-]+?)\s+Peso/i
+  );
+
+  const tipoN=normalizar(tipoBruto);
+
+  if(tipoN.includes('RODOTREM') || tipoN.includes('RODO TREM') || tipoN.includes('9 EIXO')){
+    tipoVeiculo='RODO-TREM 9 EIXO';
+  }else if(tipoN.includes('BITREM') || tipoN.includes('BI TREM') || tipoN.includes('7 EIXO')){
+    tipoVeiculo='BI-TREM 7 EIXO';
+  }else{
+    tipoVeiculo='CARRETA LS 6 EIXO';
+  }
 
 else if(ehPampa){
 

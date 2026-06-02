@@ -977,107 +977,122 @@ function extrairPesos(texto){
     return 0;
   }
 
-  // REGRA 1: PESO INICIAL / PESO FINAL / PESO LIQUIDO
-  let inicial=achar(
-    /PESO\s+INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
-    /INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
+  function retorno(tara,bruto,liquido,metodo){
+    return {
+      tara:String(tara),
+      bruto:String(bruto),
+      liquido:String(liquido || (bruto-tara)),
+      metodo
+    };
+  }
+
+  // REGRA 0: validação matemática com qualquer trio de números
+  const todos=[...raw.matchAll(/\b\d{2,3}[.,]\d{3}\b|\b\d{5}\b/g)]
+    .map(m=>num(m[0]))
+    .filter(v=>v>=10000 && v<=90000);
+
+  const unicos=[...new Set(todos)].sort((a,b)=>a-b);
+
+  console.log('PESOS CANDIDATOS:',unicos);
+
+  for(const bruto of unicos.slice().reverse()){
+    for(const tara of unicos){
+      if(bruto<=tara) continue;
+      const calc=bruto-tara;
+
+      for(const liquido of unicos){
+        if(Math.abs(calc-liquido)<=150){
+          return retorno(tara,bruto,liquido,'REGRA 0 - TRIO VALIDADO');
+        }
+      }
+    }
+  }
+
+  // REGRA 1: PESAGEM ENTRADA / PESAGEM SAIDA
+  const entrada=achar(
+    /PESAGEM\s+ENTRADA[\s\S]{0,120}?PESO\s*[:|]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /ENTRADA[\s\S]{0,120}?PESO\s*[:|]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i
   );
 
-  let final=achar(
-    /PESO\s+FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
-    /FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
+  const saida=achar(
+    /PESAGEM\s+SA[IÍ]DA[\s\S]{0,120}?PESO\s*[:|]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /SA[IÍ]DA[\s\S]{0,120}?PESO\s*[:|]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i
   );
 
-  let liquido=achar(
-    /PESO\s+L[IÍE]QUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
-    /LIQUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i,
-    /L[IÍ]QUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{4,6})/i
+  const totalEntradaSaida=achar(
+    /TOTAL\s+L[IÍ]QUIDO[\s\S]{0,80}?(\d{2,3}[.,]?\d{3}|\d{5})/i
+  );
+
+  if(entrada && saida && entrada>=10000 && saida>=10000){
+    const tara=Math.min(entrada,saida);
+    const bruto=Math.max(entrada,saida);
+    const calc=bruto-tara;
+    const liquido=(totalEntradaSaida && Math.abs(totalEntradaSaida-calc)<=500)
+      ? totalEntradaSaida
+      : calc;
+
+    return retorno(tara,bruto,liquido,'REGRA 1 - ENTRADA/SAIDA');
+  }
+
+  // REGRA 2: PESO INICIAL / PESO FINAL
+  const inicial=achar(
+    /PESO\s+INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /INICIAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i
+  );
+
+  const final=achar(
+    /PESO\s+FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /FINAL\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i
+  );
+
+  const liquidoInicialFinal=achar(
+    /PESO\s+L[IÍE]QUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /LIQUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i,
+    /LEQUIDO\s*[:=]?\s*(\d{2,3}[.,]?\d{3}|\d{5})/i
   );
 
   if(inicial && final && inicial>=10000 && final>=10000){
     const tara=Math.min(inicial,final);
     const bruto=Math.max(inicial,final);
     const calc=bruto-tara;
+    const liquido=(liquidoInicialFinal && Math.abs(liquidoInicialFinal-calc)<=500)
+      ? liquidoInicialFinal
+      : calc;
 
-    if(!liquido || Math.abs(calc-liquido)<=100){
-      return {
-        tara:String(tara),
-        bruto:String(bruto),
-        liquido:String(liquido||calc),
-        metodo:'REGRA 1 - INICIAL/FINAL'
-      };
-    }
+    return retorno(tara,bruto,liquido,'REGRA 2 - INICIAL/FINAL');
   }
 
-  // REGRA 2: PESO BRUTO / PESO TARA / LIQUIDO
-  let bruto=achar(
-    /PESO\s+BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
-    /BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  // REGRA 3: PESO BRUTO / PESO TARA / LIQUIDO
+  const brutoRotulo=achar(
+    /PESO\s+BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i,
+    /BRUTO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i
   );
 
-  let tara=achar(
-    /PESO\s+TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
-    /TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  const taraRotulo=achar(
+    /PESO\s+TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i,
+    /TARA\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i
   );
 
-  liquido=achar(
-    /LIQUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
-    /L[IÍ]QUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i,
-    /SALDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{4,6})/i
+  const liquidoRotulo=achar(
+    /LIQUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i,
+    /L[IÍ]QUIDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i,
+    /SALDO\s*[:.\-=]*\s*(\d{2,3}[.,]\d{3}|\d{5})/i
   );
 
-  if(bruto && tara){
-    const calc=bruto-tara;
+  if(brutoRotulo && taraRotulo){
+    const calc=brutoRotulo-taraRotulo;
+    const liquido=(liquidoRotulo && Math.abs(liquidoRotulo-calc)<=500)
+      ? liquidoRotulo
+      : calc;
 
-    if(!liquido || Math.abs(calc-liquido)<=150){
-      return {
-        tara:String(tara),
-        bruto:String(bruto),
-        liquido:String(liquido||calc),
-        metodo:'REGRA 2 - BRUTO/TARA'
-      };
-    }
+    return retorno(taraRotulo,brutoRotulo,liquido,'REGRA 3 - BRUTO/TARA');
   }
 
-  // REGRA 3: números soltos com validação bruto - tara = líquido
-  const valores=[...raw.matchAll(/\b\d{2,3}[.,]\d{3}\b|\b\d{5}\b/g)]
-    .map(m=>num(m[0]))
-    .filter(v=>v>=10000 && v<=90000);
-
-  const unicos=[...new Set(valores)].sort((a,b)=>a-b);
-
-  console.log('PESOS CANDIDATOS:',unicos);
-
-  for(const b of unicos.slice().reverse()){
-    for(const t of unicos){
-      if(b<=t) continue;
-
-      const calc=b-t;
-
-      for(const l of unicos){
-        if(Math.abs(calc-l)<=150){
-          return {
-            tara:String(t),
-            bruto:String(b),
-            liquido:String(l),
-            metodo:'REGRA 3 - VALIDACAO MATEMATICA'
-          };
-        }
-      }
-    }
-  }
-
-  // REGRA 4: fallback maior e menor
+  // REGRA 4: maior e menor apenas se tiver dois pesos confiáveis
   if(unicos.length>=2){
-    const t=unicos[0];
-    const b=unicos[unicos.length-1];
-
-    return {
-      tara:String(t),
-      bruto:String(b),
-      liquido:String(b-t),
-      metodo:'REGRA 4 - MAIOR/MENOR'
-    };
+    const tara=unicos[0];
+    const bruto=unicos[unicos.length-1];
+    return retorno(tara,bruto,bruto-tara,'REGRA 4 - MAIOR/MENOR');
   }
 
   alert('Não consegui validar a pesagem automaticamente. Vou pedir manual.');

@@ -1308,3 +1308,4 @@ function criarPainelRobo(){
 criarPainelRobo();
 
 alert('ROBÔ SOLUM V2 CORRIGIDO - PAINEL COMPACTO CARREGADO.');
+  })();

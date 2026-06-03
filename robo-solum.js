@@ -385,6 +385,10 @@ let transportadora='';
 
 if(ehMotz){
 
+console.log('===== TEXTO MOTZ =====');
+console.log(textoLimpo);
+console.log('===== FIM TEXTO MOTZ =====');
+
   transportadora='MOTZ TRANSPORTES LTDA';
 
   const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);

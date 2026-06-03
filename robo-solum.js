@@ -420,6 +420,10 @@ if(ehMotz){
 }
 else if(ehFribom){
 
+  console.log('===== TEXTO FRIBOM =====');
+console.log(textoLimpo);
+console.log('===== FIM TEXTO =====');
+
   transportadora='FRIBON TRANSPORTES LTDA PIAUÍ';
 
   motorista=achar(

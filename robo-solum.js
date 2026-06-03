@@ -369,6 +369,7 @@ console.log("=================================");
 const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
 const ehPampa=/RHPAMPA|PAMPA|MAISFRETE/i.test(textoLimpo);
 const ehMafro=/MAFRO/i.test(textoLimpo);
+const ehFribom=/FRIBON|FRIBOM/i.test(textoLimpo);
 
 let placaCavalo='';
 let placaCarreta1='';
@@ -415,6 +416,56 @@ if(ehMotz){
   cnh='';
   tipoBruto='RODOTREM 9 EIXO';
   tipoVeiculo='RODO-TREM 9 EIXO';
+
+}
+else if(ehFribom){
+
+  transportadora='FRIBON TRANSPORTES LTDA PIAUÍ';
+
+  motorista=achar(
+    /Solicitamos\s+entregar\s+ao\s+motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
+    /motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+  );
+
+  cpfMotorista=somenteNumero(
+    achar(/CPF\s*[:.\s]*([\d\.\/\-]+)/i)
+  );
+
+  cnh=somenteNumero(
+    achar(/CNH\s*[:.\s]*(\d{5,15})/i)
+  );
+
+  placaCavalo=limparPlaca(
+    achar(/ve[ií]culo\s+placa\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
+  );
+
+  if(!placaCavalo){
+    placaCavalo=placasValidas[0]||'';
+  }
+
+  const carretas=[...textoLimpo.matchAll(/Carreta\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/gi)]
+    .map(x=>limparPlaca(x[1]))
+    .filter(p=>p && p!==placaCavalo);
+
+  placaCarreta1=carretas[0]||'';
+  placaCarreta2=carretas[1]||'';
+  placaCarreta3=carretas[2]||'';
+
+  uf=achar(
+    /Estado\s*[:.\s]*([A-Z]{2})/i,
+    /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b\s+Carreta/i
+  ).toUpperCase();
+
+  if(/BI[\-\s]*TREM\s*7\s*EIXO/i.test(textoLimpo)){
+    tipoVeiculo='BI-TREM 7 EIXO';
+    tipoBruto='BI-TREM 7 EIXO';
+  }else if(/RODO[\-\s]*TREM\s*9\s*EIXO/i.test(textoLimpo)){
+    tipoVeiculo='RODO-TREM 9 EIXO';
+    tipoBruto='RODO-TREM 9 EIXO';
+  }else{
+    tipoVeiculo='CARRETA LS 6 EIXO';
+    tipoBruto='CARRETA LS 6 EIXO';
+  }
 
 }
 

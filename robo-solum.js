@@ -414,6 +414,22 @@ if(ehMotz){
     placaCarreta3=placasMotz[3]||'';
   }
 
+  // AJUSTE MOTZ MODELO NOVO:
+  // procura placas no bloco PLACA CAVALO / PLACA CARRETA / PESO BRUTO
+  const blocoMotzPlacas=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,160}?PESO\s+BRUTO/i);
+
+  if(blocoMotzPlacas){
+    const placasBloco=[...blocoMotzPlacas[0].matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
+      .map(x=>limparPlaca(x[0]));
+
+    if(placasBloco.length){
+      placaCavalo=placasBloco[0]||placaCavalo;
+      placaCarreta1=placasBloco[1]||placaCarreta1;
+      placaCarreta2=placasBloco[2]||placaCarreta2;
+      placaCarreta3=placasBloco[3]||placaCarreta3;
+    }
+  }
+
   if(!motorista){
     motorista=achar(
       /CLIENTE\s*:\s*AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i,

@@ -383,16 +383,6 @@ let tipoBruto='';
 let tipoVeiculo='';
 let transportadora='';
 
-if(ehMotz){
-
-  console.log('===== TEXTO MOTZ =====');
-  console.log(textoLimpo);
-  console.log('===== FIM TEXTO MOTZ =====');
-
-  transportadora='MOTZ TRANSPORTES LTDA';
-
-  const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
-  cpfMotorista=cpfMotzMatch ? cpfMotzMatch[0].replace(/\D/g,'') : '';
 
  if(ehMotz){
 

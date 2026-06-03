@@ -437,6 +437,20 @@ if(docFribom){
   cpfMotorista=docFribom[1];
   cnh=docFribom[3];
 }
+  if(!motorista){
+  motorista=achar(
+    /MOTORISTA\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
+    /ORDEM\s+DE\s+CARREGAMENTO\s+AGREX\s+DO\s+BRASIL\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s\-]+?\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ\-]+\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+\d{9,11}[-]?\d{0,2}\s+\d{8,15}/i
+  );
+}
+
+const docFribom2 = textoLimpo.match(/([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(\d{9,11})[-]?(\d{0,2})\s+(\d{8,15})\s+RODOTREM/i);
+
+if(docFribom2){
+  if(!motorista) motorista=docFribom2[1].trim();
+  cpfMotorista=(docFribom2[2]+docFribom2[3]).replace(/\D/g,'');
+  cnh=docFribom2[4].replace(/\D/g,'');
+}
   placaCavalo=limparPlaca(
     achar(/ve[ií]culo\s+placa\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
   );

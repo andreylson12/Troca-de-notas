@@ -459,25 +459,32 @@ if(ehMotz){
     );
   }
 
-  // UF MOTZ: primeiro tenta a UF perto da PLACA CAVALO, para não pegar FILIAL errado.
-  uf='';
+  // UF MOTZ: pega a UF que vem depois da PLACA CAVALO
+uf='';
 
-  const blocoUF=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,250}/i);
+const placaLinhaUF=textoLimpo.match(
+  /PLACA\s+CAVALO\s*[:.\s]*[A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2}\s+CIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)/i
+);
+
+if(placaLinhaUF){
+  uf=placaLinhaUF[1].toUpperCase();
+}
+
+if(!uf){
+  const blocoUF=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,120}/i);
 
   if(blocoUF){
-    const mUF=blocoUF[0].match(/\bCIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+    const ufsValidas=[...blocoUF[0].matchAll(/CIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)/gi)]
+      .map(x=>x[1].toUpperCase())
+      .filter(u=>u.length===2);
 
-    if(mUF){
-      uf=mUF[1].toUpperCase();
+    if(ufsValidas.length){
+      uf=ufsValidas[0];
     }
   }
+}
 
-  if(!uf){
-    const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
-    uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
-  }
-
-  cnh=somenteNumero(
+    cnh=somenteNumero(
     achar(/CNH\s*[:.\s]*(\d{5,15})/i)
   );
 

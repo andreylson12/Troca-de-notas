@@ -383,8 +383,7 @@ let tipoBruto='';
 let tipoVeiculo='';
 let transportadora='';
 
-
- if(ehMotz){
+if(ehMotz){
 
   console.log('===== TEXTO MOTZ =====');
   console.log(textoLimpo);
@@ -415,10 +414,10 @@ let transportadora='';
     placaCarreta3=placasMotz[3]||'';
   }
 
-  const blocoMotzPlacas=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,160}?PESO\s+BRUTO/i);
+  const blocoMotzPlacas=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,180}?(?:PESO\s+BRUTO|VOLUME|PEDIDO|F[ÓO]RMULA)/i);
 
   if(blocoMotzPlacas){
-    const placasBloco=[...blocoMotzPlacas[0].matchAll(/[A-Z]{3}\d[A-Z0-9]\d{2}/g)]
+    const placasBloco=[...blocoMotzPlacas[0].matchAll(/[A-Z]{3}[-]?\d[A-Z0-9][-\s]?\d{2}/g)]
       .map(x=>limparPlaca(x[0]));
 
     if(placasBloco.length){
@@ -460,23 +459,22 @@ let transportadora='';
     );
   }
 
-  const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
-  uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
+  // UF MOTZ: primeiro tenta a UF perto da PLACA CAVALO, para não pegar FILIAL errado.
+  uf='';
 
-  if(!uf){
-    uf=achar(/FILIAL\s*:\s*([A-Z]{2})/i).toUpperCase();
+  const blocoUF=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,250}/i);
+
+  if(blocoUF){
+    const mUF=blocoUF[0].match(/\bCIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+
+    if(mUF){
+      uf=mUF[1].toUpperCase();
+    }
   }
 
   if(!uf){
-    const blocoUF=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,250}/i);
-
-    if(blocoUF){
-      const mUF=blocoUF[0].match(/\bCIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
-
-      if(mUF){
-        uf=mUF[1].toUpperCase();
-      }
-    }
+    const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
+    uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
   }
 
   cnh=somenteNumero(
@@ -487,6 +485,7 @@ let transportadora='';
   tipoVeiculo='RODO-TREM 9 EIXO';
 
 }
+
 else if(ehFribom){
 
   console.log('===== TEXTO FRIBOM =====');

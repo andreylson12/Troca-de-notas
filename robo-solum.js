@@ -459,7 +459,10 @@ if(ehMotz){
     );
   }
 
- // UF MOTZ: pega perto da PLACA CAVALO
+ console.log('MOTZ BLOCO UF');
+console.log(
+  textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,250}/i)?.[0]
+);
 uf='';
 
 const placaLinhaUF=textoLimpo.match(

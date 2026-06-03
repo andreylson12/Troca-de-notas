@@ -394,6 +394,17 @@ if(ehMotz){
   const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
   cpfMotorista=cpfMotzMatch ? cpfMotzMatch[0].replace(/\D/g,'') : '';
 
+ if(ehMotz){
+
+  console.log('===== TEXTO MOTZ =====');
+  console.log(textoLimpo);
+  console.log('===== FIM TEXTO MOTZ =====');
+
+  transportadora='MOTZ TRANSPORTES LTDA';
+
+  const cpfMotzMatch=textoLimpo.match(/\d{3}\.\d{3}\.\d{3}\-\d{2}/);
+  cpfMotorista=cpfMotzMatch ? cpfMotzMatch[0].replace(/\D/g,'') : '';
+
   if(cpfMotzMatch){
     const antesCpf=textoLimpo.slice(0, cpfMotzMatch.index).trim();
     const depoisCpf=textoLimpo.slice(cpfMotzMatch.index + cpfMotzMatch[0].length).trim();
@@ -414,8 +425,6 @@ if(ehMotz){
     placaCarreta3=placasMotz[3]||'';
   }
 
-  // AJUSTE MOTZ MODELO NOVO:
-  // procura placas no bloco PLACA CAVALO / PLACA CARRETA / PESO BRUTO
   const blocoMotzPlacas=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,160}?PESO\s+BRUTO/i);
 
   if(blocoMotzPlacas){
@@ -430,7 +439,6 @@ if(ehMotz){
     }
   }
 
-  // FALLBACK MOTZ MODELO COM PLACA CAVALO / PLACA CARRETA EM LINHAS
   if(!placaCavalo){
     placaCavalo=limparPlaca(
       achar(/PLACA\s+CAVALO\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
@@ -470,8 +478,15 @@ if(ehMotz){
   }
 
   if(!uf){
-    const ufsLinha=[...textoLimpo.matchAll(/CIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)/gi)];
-    uf=ufsLinha.length ? ufsLinha[ufsLinha.length-1][1].toUpperCase() : '';
+    const blocoUF=textoLimpo.match(/PLACA\s+CAVALO[\s\S]{0,250}/i);
+
+    if(blocoUF){
+      const mUF=blocoUF[0].match(/\bCIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i);
+
+      if(mUF){
+        uf=mUF[1].toUpperCase();
+      }
+    }
   }
 
   cnh=somenteNumero(

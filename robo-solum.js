@@ -430,10 +430,35 @@ if(ehMotz){
     }
   }
 
+  // FALLBACK MOTZ MODELO COM PLACA CAVALO / PLACA CARRETA EM LINHAS
+  if(!placaCavalo){
+    placaCavalo=limparPlaca(
+      achar(/PLACA\s+CAVALO\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
+    );
+  }
+
+  const carretasMotzLinha=[...textoLimpo.matchAll(/PLACA\s+CARRETA\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/gi)]
+    .map(x=>limparPlaca(x[1]))
+    .filter(Boolean);
+
+  if(carretasMotzLinha.length){
+    placaCarreta1=placaCarreta1||carretasMotzLinha[0]||'';
+    placaCarreta2=placaCarreta2||carretasMotzLinha[1]||'';
+    placaCarreta3=placaCarreta3||carretasMotzLinha[2]||'';
+  }
+
   if(!motorista){
     motorista=achar(
       /CLIENTE\s*:\s*AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i,
-      /AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i
+      /AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i,
+      /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
+      /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+\d{3}[.\s]?\d{3}[.\s]?\d{3}/i
+    );
+  }
+
+  if(!cpfMotorista){
+    cpfMotorista=somenteNumero(
+      achar(/CPF\s*[:.\s]*([\d\.\/\-]{9,20})/i)
     );
   }
 
@@ -442,6 +467,11 @@ if(ehMotz){
 
   if(!uf){
     uf=achar(/FILIAL\s*:\s*([A-Z]{2})/i).toUpperCase();
+  }
+
+  if(!uf){
+    const ufsLinha=[...textoLimpo.matchAll(/CIDADE\s*:\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)/gi)];
+    uf=ufsLinha.length ? ufsLinha[ufsLinha.length-1][1].toUpperCase() : '';
   }
 
   cnh=somenteNumero(

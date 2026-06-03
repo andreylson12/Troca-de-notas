@@ -385,9 +385,9 @@ let transportadora='';
 
 if(ehMotz){
 
-console.log('===== TEXTO MOTZ =====');
-console.log(textoLimpo);
-console.log('===== FIM TEXTO MOTZ =====');
+  console.log('===== TEXTO MOTZ =====');
+  console.log(textoLimpo);
+  console.log('===== FIM TEXTO MOTZ =====');
 
   transportadora='MOTZ TRANSPORTES LTDA';
 
@@ -414,10 +414,24 @@ console.log('===== FIM TEXTO MOTZ =====');
     placaCarreta3=placasMotz[3]||'';
   }
 
+  if(!motorista){
+    motorista=achar(
+      /CLIENTE\s*:\s*AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i,
+      /AGREX\s+D[EO]\s+BRASIL\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+SOJA/i
+    );
+  }
+
   const ufsMotz=[...textoLimpo.matchAll(/\bUF\s*:?\s*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/gi)];
   uf=ufsMotz.length ? ufsMotz[ufsMotz.length-1][1].toUpperCase() : '';
 
-  cnh='';
+  if(!uf){
+    uf=achar(/FILIAL\s*:\s*([A-Z]{2})/i).toUpperCase();
+  }
+
+  cnh=somenteNumero(
+    achar(/CNH\s*[:.\s]*(\d{5,15})/i)
+  );
+
   tipoBruto='RODOTREM 9 EIXO';
   tipoVeiculo='RODO-TREM 9 EIXO';
 

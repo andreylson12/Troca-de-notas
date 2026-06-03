@@ -423,18 +423,16 @@ else if(ehFribom){
   transportadora='FRIBON TRANSPORTES LTDA PIAUÍ';
 
   motorista=achar(
-    /Solicitamos\s+entregar\s+ao\s+motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i,
-    /motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
-  );
+  /Solicitamos\s+entregar\s+ao\s+motorista\s*[:\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF\s*:/i
+);
 
-  cpfMotorista=somenteNumero(
-    achar(/CPF\s*[:.\s]*([\d\.\/\-]+)/i)
-  );
+cpfMotorista=somenteNumero(
+  achar(/CPF\s*:\s*(\d{11})/i)
+);
 
-  cnh=somenteNumero(
-    achar(/CNH\s*[:.\s]*(\d{5,15})/i)
-  );
-
+cnh=somenteNumero(
+  achar(/CNH\s*:\s*(\d{5,15})/i)
+);
   placaCavalo=limparPlaca(
     achar(/ve[ií]culo\s+placa\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
   );
@@ -443,13 +441,14 @@ else if(ehFribom){
     placaCavalo=placasValidas[0]||'';
   }
 
-  const carretas=[...textoLimpo.matchAll(/Carreta\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/gi)]
-    .map(x=>limparPlaca(x[1]))
-    .filter(p=>p && p!==placaCavalo);
+  const carretas=[...new Set(
+  [...textoLimpo.matchAll(/PFK\d[A-Z0-9]{2}/gi)]
+    .map(x=>limparPlaca(x[0]))
+)];
 
-  placaCarreta1=carretas[0]||'';
-  placaCarreta2=carretas[1]||'';
-  placaCarreta3=carretas[2]||'';
+placaCarreta1=carretas[0]||'';
+placaCarreta2=carretas[1]||'';
+placaCarreta3=carretas[2]||'';
 
   uf=achar(
     /Estado\s*[:.\s]*([A-Z]{2})/i,

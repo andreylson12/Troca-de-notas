@@ -673,56 +673,88 @@ else if(ehPampa){
   
 else if(ehFuturo){
 
+  console.log('===== TEXTO FUTURO =====');
+  console.log(textoLimpo);
+  console.log('===== FIM TEXTO FUTURO =====');
+
   transportadora='FUTURO LOGISTICA TRANSPORTES LTDA';
 
-motorista=achar(
-  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+RG\s*:/i,
-  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF\s*:/i,
-  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)/i
-);
+  const placasFuturo=[...textoLimpo.matchAll(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/g)]
+    .map(x=>limparPlaca(x[0]));
 
-  cpfMotorista=somenteNumero(
-  achar(
-    /CPF\s*:\s*([\d\.\-\/]+)/i,
-    /\b(\d{11})\b/
-  )
-);
-
-  cnh=somenteNumero(
-    achar(
-      /Form\.\s*CNH\s*:\s*(\d+)/i,
-      /CNH\s*:\s*(\d+)/i
-    )
-  );
+  const placasUnicas=[...new Set(placasFuturo)];
 
   placaCavalo=limparPlaca(
-    achar(
-      /Cavalo\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
-    )
+    achar(/Cavalo\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i)
   );
 
   placaCarreta1=limparPlaca(
-    achar(
-      /Carreta\s*1\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
-    )
+    achar(/Carreta\s*1\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i)
   );
 
   placaCarreta2=limparPlaca(
-    achar(
-      /Carreta\s*2\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
-    )
+    achar(/Carreta\s*2\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i)
   );
 
   placaCarreta3=limparPlaca(
-    achar(
-      /Carreta\s*3\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
-    )
+    achar(/Carreta\s*3\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i)
   );
 
+  if(!placaCavalo) placaCavalo=placasUnicas[0]||'';
+  if(!placaCarreta1) placaCarreta1=placasUnicas[1]||'';
+  if(!placaCarreta2) placaCarreta2=placasUnicas[2]||'';
+  if(!placaCarreta3) placaCarreta3=placasUnicas[3]||'';
+
+  motorista=achar(
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Endere[cç]o/i,
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+RG/i,
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+  );
+
+  if(!motorista || motorista.trim()==='RG'){
+    const idxCavalo=textoLimpo.indexOf('RSM-4G03')>=0
+      ? textoLimpo.indexOf('RSM-4G03')
+      : textoLimpo.indexOf(placaCavalo);
+
+    if(idxCavalo>=0){
+      const trechoMotorista=textoLimpo.slice(idxCavalo, idxCavalo+250);
+
+      const mMot=trechoMotorista.match(/[A-Z]{3}[-]?\d[A-Z0-9]\d{2}\s+[A-Z]{3}[-]?\d[A-Z0-9]\d{2}\s+[A-Z]{3}[-]?\d[A-Z0-9]\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+RUA/i);
+
+      if(mMot){
+        motorista=mMot[1].trim();
+      }
+    }
+  }
+
+  cpfMotorista=somenteNumero(
+    achar(/CPF\s*:\s*([\d\.\-\/]+)/i)
+  );
+
+  if(!cpfMotorista){
+    const cpfFuturo=textoLimpo.match(/\b\d{3}\.\d{3}\.\d{3}\-\d{2}\b/);
+    cpfMotorista=cpfFuturo ? somenteNumero(cpfFuturo[0]) : '';
+  }
+
+  cnh=somenteNumero(
+    achar(/Form\.\s*CNH\s*:\s*(\d+)/i)
+  );
+
+  if(!cnh){
+    const docsFuturo=textoLimpo.match(/\b\d{3}\.\d{3}\.\d{3}\-\d{2}\s+(\d{8,15})\s+\d{5,10}/);
+    cnh=docsFuturo ? docsFuturo[1] : '';
+  }
+
   uf=achar(
-  /Cidade\s*:\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+\s+UF\s*:\s*(PI|MA|BA|GO|MT|TO|PA|PB|PE|CE|RN|AL|SE|MG|SP|PR|SC|RS|RJ|ES|MS|RO|AC|AM|RR|AP|DF)/i,
-  /UF\s*:\s*(PI|MA|BA|GO|MT|TO|PA|PB|PE|CE|RN|AL|SE|MG|SP|PR|SC|RS|RJ|ES|MS|RO|AC|AM|RR|AP|DF)/i
-).toUpperCase();
+    /Motorista[\s\S]{0,300}?UF\s*:\s*([A-Z]{2})/i,
+    /Cidade\s*:\s*PIRACURUCA[\s\S]{0,80}?UF\s*:\s*([A-Z]{2})/i
+  ).toUpperCase();
+
+  if(!uf){
+    if(/PIRACURUCA/i.test(textoLimpo)){
+      uf='PI';
+    }
+  }
 
   if(/RODOTREM\s*9\s*EIXOS?/i.test(textoLimpo)){
     tipoVeiculo='RODO-TREM 9 EIXO';

@@ -422,10 +422,11 @@ else if(ehMafro){
 
   transportadora='MAFRO TRANSPORTES LTDA';
 
-  motorista=achar(
-    /Dados do Motorista\s+MAFRO TRANSPORTES LTDA\s+\(PI\)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+[A-Z]{3}/i,
-    /Motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
-  );
+ motorista=achar(
+  /MAFRO TRANSPORTES LTDA\s+\(PI\)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+RIA/i,
+  /Dados do Motorista[\s\S]{0,120}?([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+[A-Z]{3}[-]?\d[A-Z0-9]\d{2}/i,
+  /Motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF/i
+);
 
   cpfMotorista=somenteNumero(
     achar(/CPF\s*[:.\s]*([\d\.\/\-]+)/i)

@@ -426,17 +426,17 @@ console.log('===== FIM TEXTO =====');
 
   transportadora='FRIBON TRANSPORTES LTDA PIAUÍ';
 
-  motorista=achar(
-  /Solicitamos\s+entregar\s+ao\s+motorista\s*[:\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF\s*:/i
+motorista=achar(
+  /Proprietario\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+QUANTIDADE/i,
+  /Proprietario\s*:\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?\s+MONTE\s+ALEGRE-PI\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+VOLUMES/i
 );
 
-cpfMotorista=somenteNumero(
-  achar(/CPF\s*:\s*(\d{11})/i)
-);
+const docFribom = textoLimpo.match(/(\d{11})\s+(\d{5,10})\s+(\d{8,15})/);
 
-cnh=somenteNumero(
-  achar(/CNH\s*:\s*(\d{5,15})/i)
-);
+if(docFribom){
+  cpfMotorista=docFribom[1];
+  cnh=docFribom[3];
+}
   placaCavalo=limparPlaca(
     achar(/ve[ií]culo\s+placa\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i)
   );

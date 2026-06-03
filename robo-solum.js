@@ -365,11 +365,12 @@ console.log("=================================");
     .map(m=>limparPlaca(m[0]))
     .filter(p=>p.length===7);
 
- const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
+const ehMotz=/MOTZ|HEBROM/i.test(textoLimpo);
 const ehRodoviva=/RODOVIVA/i.test(textoLimpo);
 const ehPampa=/RHPAMPA|PAMPA|MAISFRETE/i.test(textoLimpo);
 const ehMafro=/MAFRO/i.test(textoLimpo);
 const ehFribom=/FRIBON|FRIBOM/i.test(textoLimpo);
+const ehFuturo=/FUTURO\s+LOGISTICA|FUTURO\s+LOGISTICA\s+TRANSPORTES/i.test(textoLimpo);
 
 let placaCavalo='';
 let placaCarreta1='';
@@ -666,6 +667,72 @@ else if(ehPampa){
   else{
     tipoBruto='CARRETA LS';
     tipoVeiculo='CARRETA LS 6 EIXO';
+  }
+
+}
+  
+else if(ehFuturo){
+
+  transportadora='FUTURO LOGISTICA TRANSPORTES LTDA';
+
+  motorista=achar(
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Endere[cç]o/i,
+    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)/i
+  );
+
+  cpfMotorista=somenteNumero(
+    achar(
+      /CPF\s*:\s*([\d\.\-\/]+)/i
+    )
+  );
+
+  cnh=somenteNumero(
+    achar(
+      /Form\.\s*CNH\s*:\s*(\d+)/i,
+      /CNH\s*:\s*(\d+)/i
+    )
+  );
+
+  placaCavalo=limparPlaca(
+    achar(
+      /Cavalo\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
+    )
+  );
+
+  placaCarreta1=limparPlaca(
+    achar(
+      /Carreta\s*1\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
+    )
+  );
+
+  placaCarreta2=limparPlaca(
+    achar(
+      /Carreta\s*2\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
+    )
+  );
+
+  placaCarreta3=limparPlaca(
+    achar(
+      /Carreta\s*3\s*:\s*([A-Z]{3}[-]?\d[A-Z0-9]\d{2})/i
+    )
+  );
+
+  uf=achar(
+    /Motorista[\s\S]{0,300}?UF\s*:\s*([A-Z]{2})/i,
+    /Cidade\s*:\s*PIRACURUCA[\s\S]{0,50}?UF\s*:\s*([A-Z]{2})/i
+  ).toUpperCase();
+
+  if(/RODOTREM\s*9\s*EIXOS?/i.test(textoLimpo)){
+    tipoVeiculo='RODO-TREM 9 EIXO';
+    tipoBruto='RODO-TREM 9 EIXO';
+  }
+  else if(/BITREM\s*7\s*EIXOS?/i.test(textoLimpo)){
+    tipoVeiculo='BI-TREM 7 EIXO';
+    tipoBruto='BI-TREM 7 EIXO';
+  }
+  else{
+    tipoVeiculo='CARRETA LS 6 EIXO';
+    tipoBruto='CARRETA LS 6 EIXO';
   }
 
 }

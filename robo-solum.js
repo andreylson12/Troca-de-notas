@@ -675,16 +675,18 @@ else if(ehFuturo){
 
   transportadora='FUTURO LOGISTICA TRANSPORTES LTDA';
 
-  motorista=achar(
-    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+Endere[cç]o/i,
-    /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)/i
-  );
+motorista=achar(
+  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+RG\s*:/i,
+  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+CPF\s*:/i,
+  /Motorista\s*:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+)/i
+);
 
   cpfMotorista=somenteNumero(
-    achar(
-      /CPF\s*:\s*([\d\.\-\/]+)/i
-    )
-  );
+  achar(
+    /CPF\s*:\s*([\d\.\-\/]+)/i,
+    /\b(\d{11})\b/
+  )
+);
 
   cnh=somenteNumero(
     achar(
@@ -718,9 +720,9 @@ else if(ehFuturo){
   );
 
   uf=achar(
-    /Motorista[\s\S]{0,300}?UF\s*:\s*([A-Z]{2})/i,
-    /Cidade\s*:\s*PIRACURUCA[\s\S]{0,50}?UF\s*:\s*([A-Z]{2})/i
-  ).toUpperCase();
+  /Cidade\s*:\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+\s+UF\s*:\s*(PI|MA|BA|GO|MT|TO|PA|PB|PE|CE|RN|AL|SE|MG|SP|PR|SC|RS|RJ|ES|MS|RO|AC|AM|RR|AP|DF)/i,
+  /UF\s*:\s*(PI|MA|BA|GO|MT|TO|PA|PB|PE|CE|RN|AL|SE|MG|SP|PR|SC|RS|RJ|ES|MS|RO|AC|AM|RR|AP|DF)/i
+).toUpperCase();
 
   if(/RODOTREM\s*9\s*EIXOS?/i.test(textoLimpo)){
     tipoVeiculo='RODO-TREM 9 EIXO';

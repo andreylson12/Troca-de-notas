@@ -479,6 +479,10 @@ async function lerOrdem(file=null){
   }
 
   if(!uf){
+  const mUfSolta=textoLimpo.match(/\bSOJA\s+(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s+\d{2}\/\d{2}\/\d{4}/i);
+  if(mUfSolta) uf=mUfSolta[1].toUpperCase();
+}
+  if(!uf){
     if(/SALVADOR\s*[-\/]?\s*BA/i.test(textoLimpo)) uf='BA';
     else if(/S[ÃA]O\s+LUIS/i.test(textoLimpo)) uf='MA';
     else if(/PORTO\s+FRANCO\s*[-\/]?\s*MA/i.test(textoLimpo)) uf='MA';

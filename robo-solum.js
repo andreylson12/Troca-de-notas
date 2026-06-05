@@ -458,6 +458,16 @@ if(placaValida(placaDunorte)){
 
 }
 
+ if(!motorista){
+  const mNome=textoLimpo.match(
+    /\b([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{1,}){2,})\b[\s\S]{0,80}?(?:RODO[\-\s]*TREM|BI[\-\s]*TREM)/i
+  );
+
+  if(mNome){
+    motorista=mNome[1].trim();
+  }
+}
+
   if(!motorista && placaCavalo){
     const idx=textoLimpo.indexOf(placaCavalo);
     if(idx>=0){

@@ -408,6 +408,7 @@ async function lerOrdem(file=null){
   }
 
   motorista=achar(
+    /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+\d{3}\.\d{3}\.\d{3}-\d{2}/i,
     /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O|CIDADE|CONTATO)/i,
     /Condutor\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|PLACA)/i,
     /Nome\s+do\s+Motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|PLACA)/i,

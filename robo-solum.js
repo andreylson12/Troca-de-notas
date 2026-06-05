@@ -409,6 +409,8 @@ async function lerOrdem(file=null){
 
   motorista=achar(
     /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O|CIDADE|CONTATO)/i,
+    /Condutor\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|PLACA)/i,
+    /Nome\s+do\s+Motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|PLACA)/i,
     /Solicitamos\s+entregar\s+ao\s+motorista\s+Sr\.?\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|RG|CNH|Para|PLACA)/i,
     /Solicitamos\s+entregar\s+ao\s+motorista\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|RG|CNH|Para|PLACA)/i,
     /MOTORISTA\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA)/i,

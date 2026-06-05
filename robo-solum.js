@@ -428,6 +428,7 @@ if(placaValida(placaDunorte)){
   }
 
   motorista=achar(
+    /Motorista\s*:\s*Placa\s+cavalo\s*:\s*\d+\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,
     /Placa\s+cavalo\s*[:.\s]*[A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,
     /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+\d{3}\.\d{3}\.\d{3}-\d{2}/i,
     /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O|CIDADE|CONTATO)/i,

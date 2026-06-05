@@ -342,6 +342,10 @@ async function lerOrdem(file=null){
   'TRECHO MOTORISTA:',
   textoLimpo.match(/Motorista[\s\S]{0,250}/i)?.[0]
 );
+  console.log(
+  'TRECHO MOTORISTA:',
+  textoLimpo.match(/DADOS\s+DO\s+MOTORISTA[\s\S]{0,250}/i)?.[0]
+);
 
   function achar(...regexes){
     for(const rx of regexes){
@@ -457,11 +461,6 @@ if(placaValida(placaDunorte)){
   );
 
 }
-
- if(!motorista){
-  const mNome=textoLimpo.match(
-    /\b([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{1,}){2,})\b[\s\S]{0,80}?(?:RODO[\-\s]*TREM|BI[\-\s]*TREM)/i
-  );
 
   if(mNome){
     motorista=mNome[1].trim();

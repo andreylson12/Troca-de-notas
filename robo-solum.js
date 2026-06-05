@@ -462,11 +462,6 @@ if(placaValida(placaDunorte)){
 
 }
 
-  if(mNome){
-    motorista=mNome[1].trim();
-  }
-}
-
   if(!motorista && placaCavalo){
     const idx=textoLimpo.indexOf(placaCavalo);
     if(idx>=0){

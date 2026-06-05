@@ -540,7 +540,6 @@ async function lerOrdem(file=null){
   );
 }
 
-}
 
 else if(ehMafro){
 

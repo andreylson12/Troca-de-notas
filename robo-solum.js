@@ -338,6 +338,11 @@ async function lerOrdem(file=null){
 
   const textoLimpo=String(texto||'').replace(/\s+/g,' ').trim();
 
+  console.log(
+  'TRECHO MOTORISTA:',
+  textoLimpo.match(/Motorista[\s\S]{0,250}/i)?.[0]
+);
+
   function achar(...regexes){
     for(const rx of regexes){
       const m=textoLimpo.match(rx);
@@ -411,6 +416,13 @@ if(placaValida(placaCavaloDireta)){
   placaCavalo=placaCavaloDireta;
 }
 
+const placaDunorte=achar(
+  /Mercadoria\s*:\s*([A-Z]{3}\d[A-Z0-9]\d{2})\s+\d{5,}/i
+);
+
+if(placaValida(placaDunorte)){
+  placaCavalo=placaDunorte;
+} 
   if(!placaValida(placaCavalo)){
     placaCavalo=placasUnicas[0]||'';
   }

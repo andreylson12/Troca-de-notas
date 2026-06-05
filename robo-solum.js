@@ -397,6 +397,11 @@ async function lerOrdem(file=null){
     /(CARGO\s*X)/i,
     /([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9\s]+TRANSPORTES\s+LTDA)/i
   );
+  if(!transportadora){
+  transportadora=achar(
+    /([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{3,}TRANSPORTES(?:\s+E\s+LOGISTICA)?\s+LTDA)/i
+  );
+}
 
   placaCavalo=limparPlaca(achar(
     /Placa\s+cavalo\s*[:.\s]*[A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,

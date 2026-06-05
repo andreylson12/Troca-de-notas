@@ -399,6 +399,7 @@ async function lerOrdem(file=null){
   );
 
   placaCavalo=limparPlaca(achar(
+    /Placa\s+cavalo\s*[:.\s]*[A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,
     /PLACA\s+CAVALO\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i,
     /PLACA\s+CAV\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i,
     /CAVALO\s*[:.\s]*([A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2})/i,
@@ -428,7 +429,7 @@ if(placaValida(placaDunorte)){
   }
 
   motorista=achar(
-    /Motorista\s*:\s*Placa\s+cavalo\s*:\s*\d+\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,
+   /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+SCANIA\s+\d{8,}/i,
     /Placa\s+cavalo\s*[:.\s]*[A-Z]{3}[-\s]?\d[A-Z0-9][-\s]?\d{2}\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+AGREX/i,
     /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+\d{3}\.\d{3}\.\d{3}-\d{2}/i,
     /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O|CIDADE|CONTATO)/i,
@@ -479,18 +480,19 @@ if(placaValida(placaDunorte)){
 
   uf='';
 
-  if(placaCavalo){
-    const idx=textoLimpo.indexOf(placaCavalo);
-    if(idx>=0){
-      const trechoUF=textoLimpo.slice(Math.max(0,idx-80),idx+180);
+ if(!uf && placaCavalo){
+  const idx=textoLimpo.indexOf(placaCavalo);
 
-      const mUF=trechoUF.match(
-        new RegExp('(?:UF|ESTADO|CIDADE)\\s*[:.\\s]*('+ufs+')','i')
-      );
+  if(idx>=0){
+    const trechoUF=textoLimpo.slice(idx, idx+250);
 
-      if(mUF) uf=mUF[1].toUpperCase();
-    }
+    const mUF=trechoUF.match(
+      /\bUF\s*[:.\s]*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i
+    );
+
+    if(mUF) uf=mUF[1].toUpperCase();
   }
+}
 
   if(!uf){
     uf=achar(

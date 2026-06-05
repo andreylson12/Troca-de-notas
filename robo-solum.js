@@ -421,6 +421,15 @@ async function lerOrdem(file=null){
     /ORDEM\s+DE\s+CARREGAMENTO\s+AGREX\s+DO\s+BRASIL[\s\S]{0,120}?([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s+\d{9,11}[-]?\d{0,2}\s+\d{8,15}/i
   );
 
+  if(!motorista){
+
+  motorista=achar(
+    /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s*[.\s]*\d{3}\.\d{3}\.\d{3}\-\d{2}/i,
+    /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O)/i
+  );
+
+}
+
   if(!motorista && placaCavalo){
     const idx=textoLimpo.indexOf(placaCavalo);
     if(idx>=0){

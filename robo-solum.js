@@ -459,6 +459,17 @@ if(placaValida(placaDunorte)){
     /([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,}){2,})\s*[.\s]*\d{3}\.\d{3}\.\d{3}\-\d{2}/i,
     /MOTORISTA\s*[:.\s]*([A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]+?)\s+(?:CPF|CNH|RG|FONE|PLACA|ENDERE[CÇ]O)/i
   );
+    
+   }
+
+    if(!motorista){
+  const mMafro=textoLimpo.match(
+    /Dados\s+do\s+Motorista[\s\S]{0,80}?MAFRO\s+TRANSPORTES\s+LTDA\s*\([A-Z]{2}\)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ]{3,}(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{1,}){2,})\s+[A-Z]{3}\d[A-Z0-9]\d{2}/i
+  );
+
+  if(mMafro){
+    motorista=mMafro[1].trim();
+  }
 
 }
 

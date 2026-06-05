@@ -483,9 +483,9 @@ if(placaValida(placaDunorte)){
     motorista='';
   }
 
-  uf='';
+ uf='';
 
- if(!uf && placaCavalo){
+if(placaCavalo){
   const idx=textoLimpo.indexOf(placaCavalo);
 
   if(idx>=0){
@@ -495,17 +495,29 @@ if(placaValida(placaDunorte)){
       /\bUF\s*[:.\s]*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/i
     );
 
-    if(mUF) uf=mUF[1].toUpperCase();
+    if(mUF){
+      uf=mUF[1].toUpperCase();
+    }
   }
 }
 
-  if(!uf){
-    uf=achar(
-      new RegExp('PLACA\\s+CAVALO[\\s\\S]{0,160}?(?:UF|ESTADO|CIDADE)\\s*[:.\\s]*('+ufs+')','i'),
-      new RegExp('CAVALO[\\s\\S]{0,160}?(?:UF|ESTADO|CIDADE)\\s*[:.\\s]*('+ufs+')','i'),
-      new RegExp('Para\\s+o\\s+carregamento[\\s\\S]{0,160}?Estado\\s*[:.\\s]*('+ufs+')','i')
-    ).toUpperCase();
+if(!uf){
+  const mUFTabela=textoLimpo.match(
+    /PLACA\s+CAVALO[\s\S]{0,120}?ESTADO\s*[:.\s]*(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)/i
+  );
+
+  if(mUFTabela){
+    uf=mUFTabela[1].toUpperCase();
   }
+}
+
+if(!uf){
+  uf=achar(
+    new RegExp('PLACA\\s+CAVALO[\\s\\S]{0,160}?(?:UF|ESTADO|CIDADE)\\s*[:.\\s]*('+ufs+')','i'),
+    new RegExp('CAVALO[\\s\\S]{0,160}?(?:UF|ESTADO|CIDADE)\\s*[:.\\s]*('+ufs+')','i'),
+    new RegExp('Para\\s+o\\s+carregamento[\\s\\S]{0,160}?Estado\\s*[:.\\s]*('+ufs+')','i')
+  ).toUpperCase();
+}
 
   if(!uf){
   const mUfSolta=textoLimpo.match(/\bSOJA\s+(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\s+\d{2}\/\d{2}\/\d{4}/i);

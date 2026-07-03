@@ -1172,8 +1172,10 @@ async function executarGuiado(){
 }
  
 function criarPainelRobo(){
+  if(document.querySelector('#robo-solum-painel')) return;
+
   const box=document.createElement('div');
-  box.style=`
+  box.id='robo-solum-painel';
     position:fixed;
     top:100px;
     right:20px;

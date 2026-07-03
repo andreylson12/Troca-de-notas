@@ -1176,6 +1176,8 @@ function criarPainelRobo(){
 
   const box=document.createElement('div');
   box.id='robo-solum-painel';
+
+  box.style=`
     position:fixed;
     top:100px;
     right:20px;
